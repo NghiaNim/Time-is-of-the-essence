@@ -10,6 +10,7 @@ class Game:
     def __init__(self, w, h):
         self.w = w
         self.h = h
+        self.projectiles_list = []
         
     def display(self):
         pass
@@ -37,6 +38,9 @@ class Creation:
         
         self.x += self.vx
         self.y += self.vy
+
+    def collision(self):
+
         
     def display(self):
         self.update()
@@ -46,12 +50,28 @@ class Creation:
         pass
 
 class Enemy(Creation):
-    def __init__(self, x, y, w, h, g, vx=3):
-        Creation.__init__(self, x, y, w, h, g):
+    def __init__(self, x, y, w, h, g, aspd, xl, xr, vx=3, follow=False, p_gravity=False):
+        Creation.__init__(self, x, y, w, h, g)
+        self.attackspeed = aspd
+        self.p_gravity = p_gravity
         self.vx = vx
+        self.follow = follow
+        self.xleft = xl
+        self.xright = xr
         self.direction = random.choice([LEFT, RIGHT])
         if self.direction == LEFT:
             self.vx *= -1
+
+    def update(self):
+        Creation.__init__(self)
+        if frameCount % self.attackspeed == 0:
+            self.attack()
+
+
+    def attack(self):
+        game.projectiles_list.append(Projectile(placeholder))
+
+
 
 #instance of creature so far                
 test = Creation(10,10,10,10,500)
