@@ -11,11 +11,8 @@ class Game:
         self.w = w
         self.h = h
         self.projectiles_list = []
-        self.enemylist = []
         
     def display(self):
-        for e in self.enemylist:
-            e.display()
         pass
         
 class Creation:
@@ -67,7 +64,7 @@ class Enemy(Creation):
             self.vx *= -1
 
     def update(self):
-        Creation.update(self)
+        Creation.__init__(self)
 
         if self.x < self.xleft:
             self.vx *= -1
@@ -77,8 +74,6 @@ class Enemy(Creation):
             self.direction = LEFT
 
         if frameCount % self.attackspeed == 0:
-            print(frameCount) # debug lines
-            print("Shoot")
             #self.attack()
 
 
@@ -89,8 +84,9 @@ class Enemy(Creation):
 
 #instance of creature so far                
 test = Creation(10,10,10,10,500)
+enemyTest = Enemy(10, 10, 30, 50, 1000, 3, 0, 800, 100, 3, False, False)
+
 game = Game(WIDTH, HEIGHT)
-game.enemylist.append(Enemy(10, 10, 30, 50, 1000, 75, 0, 800, 100, 3, False, False))
         
 def setup():
     size(WIDTH, HEIGHT)
