@@ -64,8 +64,14 @@ class Enemy(Creation):
 
     def update(self):
         Creation.__init__(self)
+
+        if self.x < self.xleft:
+            self.vx *= -1
+        elif self.x > self.xright:
+            self.vx *= -1
+
         if frameCount % self.attackspeed == 0:
-            self.attack()
+            #self.attack()
 
 
     def attack(self):
