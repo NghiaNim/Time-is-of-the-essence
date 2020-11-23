@@ -19,7 +19,7 @@ class Game:
         pass
         
 class Creation:
-    def __init__(self, x, y, w, h, g):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
         self.x = x
         self.y = y
         self.w = w
@@ -27,6 +27,11 @@ class Creation:
         self.g = g
         self.vx = 0
         self.vy = 0
+        self.img = loadImage(path + "/images/" + img_name)
+        self.img_w = img_w
+        self.img_h = img_h
+        self.num_frames = num_frames
+        self.frame= 0
         
     def gravity(self):
         if self.y + self.h >= self.g:
@@ -38,6 +43,8 @@ class Creation:
                 
     def update(self):
         self.gravity()
+        if frameCount%10 == 0:
+            self.frame = (self.frame + 1) % self.num_frames
         
         self.x += self.vx
         self.y += self.vy
@@ -47,21 +54,26 @@ class Creation:
         
     def display(self):
         self.update()
-        noFill()
-        fill(0,0,0)
-        rect(self.x, self.y, self.w, self.h)
-        pass
+        # noFill()
+        # fill(0,0,0)
+        # rect(self.x, self.y, self.w, self.h)
+        if self.direction == RIGHT:
+            image(self.img, self.x - self.img_w//2, self.y - self.img_h//2, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+        elif self.direction == LEFT:
+            image(self.img, self.x - self.img_w//2, self.y - self.img_h//2, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
 
 class Enemy(Creation):
-    def __init__(self, x, y, w, h, g, aspd, xl, xr, hp, vx=3, follow=False, p_gravity=False):
-        Creation.__init__(self, x, y, w, h, g)
-        self.attackspeed = aspd
-        self.p_gravity = p_gravity
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, follow=False, p_gravity=False):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+
         self.vx = vx
-        self.follow = follow
         self.xleft = xl
         self.xright = xr
+        self.follow = follow
         self.hp = hp
+        self.attackspeed = aspd
+        self.p_gravity = p_gravity
+
         self.direction = random.choice([LEFT, RIGHT])
         if self.direction == LEFT:
             self.vx *= -1
@@ -88,9 +100,9 @@ class Enemy(Creation):
 
 
 #instance of creature so far                
-test = Creation(10,10,10,10,500)
+# test = Creation(10,10,10,10,500)
 game = Game(WIDTH, HEIGHT)
-game.enemylist.append(Enemy(10, 10, 30, 50, 1000, 75, 0, 800, 100, 3, False, False))
+game.enemylist.append(Enemy(100, 50, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 50, 600, 100, 3))
         
 def setup():
     size(WIDTH, HEIGHT)
@@ -98,4 +110,3 @@ def setup():
 def draw():
     background(255, 255, 255)
     game.display()
-    test.display()
