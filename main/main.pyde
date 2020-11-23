@@ -45,6 +45,14 @@ class Creation:
         rect(self.x, self.y, self.w, self.h)
         pass
 
+class Enemy(Creation):
+    def __init__(self, x, y, w, h, g, vx=3):
+        Creation.__init__(self, x, y, w, h, g):
+        self.vx = vx
+        self.direction = random.choice([LEFT, RIGHT])
+        if self.direction == LEFT:
+            self.vx *= -1
+
 #instance of creature so far                
 test = Creation(10,10,10,10,500)
 
