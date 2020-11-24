@@ -10,13 +10,16 @@ class Game:
     def __init__(self, w, h, g):
         self.w = w
         self.h = h
+        self.projectiles_list = []
+        self.enemylist = []
         self.g = g
         #random sprite for hero
         self.hero = Hero(100, 100, 48, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
         
     def display(self):
         self.hero.display()
-        pass
+        for e in self.enemylist:
+            e.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -43,6 +46,8 @@ class Creation:
                 
     def update(self):
         self.gravity()
+        if frameCount%10 == 0:
+            self.frame = (self.frame + 1) % self.num_frames
         
         #slow down animation
         if frameCount%10 == 0:
@@ -50,10 +55,17 @@ class Creation:
             
         self.x += self.vx
         self.y += self.vy
+
+    # Collision detection based on rectangle corner distances/overlapping
+    def collision_rect(self, target):
+        if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+            return True
+        else:
+            return False
+
         
     def display(self):
-        self.update()
-        
+        self.update()       
         if self.direction == RIGHT:
             image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
         elif self.direction == LEFT:
@@ -69,7 +81,6 @@ class Hero(Creation):
         self.direction = RIGHT
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.idle_num_frames = idle_num_frames
-
 
     def update(self):
         self.gravity()
@@ -98,9 +109,7 @@ class Hero(Creation):
         if frameCount%5 == 0 and self.vx != 0 and self.vy == 0:
             self.frame = (self.frame + 1) % self.num_frames
         elif self.vx == 0:
-            self.frame = 0
-
-            
+            self.frame = 0    
             
         self.x += self.vx
         self.y += self.vy
@@ -130,9 +139,43 @@ class Hero(Creation):
         elif self.direction == LEFT:
             image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
 
+class Enemy(Creation):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, follow=False, p_gravity=False):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
+        self.vx = vx
+        self.xleft = xl
+        self.xright = xr
+        self.follow = follow
+        self.hp = hp
+        self.attackspeed = aspd
+        self.p_gravity = p_gravity
 
-game = Game(WIDTH, HEIGHT, 800)
+        self.direction = random.choice([LEFT, RIGHT])
+        if self.direction == LEFT:
+            self.vx *= -1
+
+    def update(self):
+        Creation.update(self)
+
+        if self.x < self.xleft:
+            self.vx *= -1
+            self.direction = RIGHT
+        elif self.x > self.xright:
+            self.vx *= -1
+            self.direction = LEFT
+
+        if frameCount % self.attackspeed == 0:
+            pass
+            #self.attack()
+
+    # Here we will be able to define the specifics of attacks 
+    def attack(self):
+        game.projectiles_list.append(Projectile(placeholder))
+
+    def death(self):
+        if self.hp <= 0:
+            game.enemylist.remove(self)
         
 def setup():
     size(WIDTH, HEIGHT)
@@ -149,7 +192,7 @@ def keyPressed():
     elif keyCode == UP:
         game.hero.key_handler[UP] = True
     elif keyCode == DOWN:
-        game.hero.key_handler[DOWN] = True
+        game.hero.key_handler[DOWN] = True    
     
 def keyReleased():
     if keyCode == LEFT:
@@ -160,3 +203,6 @@ def keyReleased():
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
+        
+game = Game(WIDTH, HEIGHT, 800)
+game.enemylist.append(Enemy(100, 50, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 50, 600, 100, 3))
