@@ -14,7 +14,7 @@ class Game:
         self.enemylist = []
         self.g = g
         #random sprite for hero
-        self.hero = Hero(100, 100, 48, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
+        self.hero = Hero(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
         
     def display(self):
         self.hero.display()
@@ -131,13 +131,37 @@ class Hero(Creation):
         #4 frames of idle but currently only 1
         #Won't implement the rest if this is not a fitting sprite
         elif self.vx == 0 and self.direction == RIGHT:
-            image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) *self.img_w, self.img_h)
+            image(self.img_idle, self.x, self.y, self.img_w - 18, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) *self.img_w - 18, self.img_h)
         elif self.vx == 0 and self.direction == LEFT:
-            image(self.img_idle, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            image(self.img_idle, self.x, self.y, self.img_w - 18, self.img_h, (self.frame + 1) * self.img_w - 18, 0, self.frame * self.img_w, self.img_h)
         elif self.direction == RIGHT:
-            image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            image(self.img, self.x, self.y, self.img_w - 18, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w - 18, self.img_h)
         elif self.direction == LEFT:
-            image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            image(self.img, self.x, self.y, self.img_w - 18, self.img_h, (self.frame + 1) * self.img_w - 18, 0, self.frame * self.img_w, self.img_h)
+
+class Jeff(Hero):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.time = 100
+        
+    def special_ability(self):
+        pass
+    
+class Jill(Hero):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.time = 30
+        
+    def special_ability(self):
+        pass
+    
+class John(Hero):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.time = 120
+        
+    def special_ability(self):
+        pass
 
 class Enemy(Creation):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, follow=False, p_gravity=False):
