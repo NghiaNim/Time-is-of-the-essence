@@ -49,7 +49,7 @@ class Creation:
         self.x += self.vx
         self.y += self.vy
 
-        #Collision detection based on rectangle corner distances/overlapping
+    # Collision detection based on rectangle corner distances/overlapping
     def collision_rect(self, target):
         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
             return True
@@ -62,6 +62,8 @@ class Creation:
         # noFill()
         # fill(0,0,0)
         # rect(self.x, self.y, self.w, self.h)
+
+        #picture representation
         if self.direction == RIGHT:
             image(self.img, self.x - self.img_w//2, self.y - self.img_h//2, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
         elif self.direction == LEFT:
@@ -94,13 +96,17 @@ class Enemy(Creation):
             self.direction = LEFT
 
         if frameCount % self.attackspeed == 0:
-            print(frameCount) # debug lines
-            print("Shoot")
+            pass
             #self.attack()
 
-
+    # Here we will be able to define the specifics of attacks 
     def attack(self):
         game.projectiles_list.append(Projectile(placeholder))
+
+
+    def death(self):
+        if self.hp <= 0:
+            game.enemylist.remove(self)
 
 
 
