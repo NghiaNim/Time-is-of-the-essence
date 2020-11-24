@@ -184,6 +184,16 @@ def draw():
     background(255, 255, 255)
     game.display()
 
+def keyPressed():
+    if keyCode == LEFT:
+        game.hero.key_handler[LEFT] = True
+    elif keyCode == RIGHT:
+        game.hero.key_handler[RIGHT] = True
+    elif keyCode == UP:
+        game.hero.key_handler[UP] = True
+    elif keyCode == DOWN:
+        game.hero.key_handler[DOWN] = True    
+    
 def keyReleased():
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = False
