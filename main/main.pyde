@@ -49,8 +49,13 @@ class Creation:
         self.x += self.vx
         self.y += self.vy
 
-    def collision(self):
-        print("WIP")
+        #Collision detection based on rectangle corner distances/overlapping
+    def collision_rect(self, target):
+        if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+            return True
+        else:
+            return False
+
         
     def display(self):
         self.update()
