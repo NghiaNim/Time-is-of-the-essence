@@ -52,14 +52,20 @@ class Hero(Creation):
     def __init__(self, x, y, w, h, g):
         Creation.__init__(self, x, y, w, h, g)
         self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False}
+        self.standing_y = y
+        self.standing_h = h
 
     def update(self):
         self.gravity()
         
         if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
             self.vx = 0
-            
+            self.y = self.standing_y + self.standing_h/2
+            self.h = self.standing_h/2
         else:
+            self.y = self.standing_y
+            self.h = self.standing_h
+            
             if self.key_handler[LEFT]:
                 self.vx = -10
             elif self.key_handler[RIGHT]:
@@ -74,11 +80,11 @@ class Hero(Creation):
             
         self.x += self.vx
         self.y += self.vy
+        self.standing_y += self.vy
+        
 
 
 
-#instance of creature so far                
-test = Creation(10,10,10,10,500)
 
 game = Game(WIDTH, HEIGHT, 500)
         
@@ -88,7 +94,6 @@ def setup():
 def draw():
     background(255, 255, 255)
     game.display()
-    test.display()
 
 def keyPressed():
     if keyCode == LEFT:
