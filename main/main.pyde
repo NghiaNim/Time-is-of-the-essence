@@ -1,3 +1,4 @@
+add_library('controlP5')
 add_library('minim')
 
 import random, os
@@ -5,17 +6,24 @@ path = os.getcwd()
 player = Minim(this)
 WIDTH = 1920
 HEIGHT = 1080
+gameScreen = 0
 
 class Game:
-    def __init__(self, w, h, g):
+    def __init__(self, w, h, g, hero):
         self.w = w
         self.h = h
         self.projectiles_list = []
         self.enemylist = []
         self.g = g
         #random sprite for hero
-        self.hero = Hero(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
-        
+        if hero == 'Jack':
+            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
+        elif hero == 'Jill':
+            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4)
+        elif hero == 'John':
+            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4)
+    
+    
     def display(self):
         self.hero.display()
         for e in self.enemylist:
@@ -73,7 +81,7 @@ class Creation:
 
 
 class Hero(Creation):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, time):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
         self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False}
         self.standing_y = y
@@ -81,9 +89,12 @@ class Hero(Creation):
         self.direction = RIGHT
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.idle_num_frames = idle_num_frames
+        self.time = time
 
     def update(self):
         self.gravity()
+        if frameCount % 60 == 0:
+            self.time -= 1
         
         if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
             self.vx = 0
@@ -138,27 +149,28 @@ class Hero(Creation):
             image(self.img, self.x, self.y, self.img_w - 18, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w - 18, self.img_h)
         elif self.direction == LEFT:
             image(self.img, self.x, self.y, self.img_w - 18, self.img_h, (self.frame + 1) * self.img_w - 18, 0, self.frame * self.img_w, self.img_h)
+        
+        textSize(20)
+        text('Remaining time: ' + str(self.time), 50, 30)
 
-class Jeff(Hero):
+class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.time = 100
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, 100)
+
         
     def special_ability(self):
         pass
     
 class Jill(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.time = 30
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, 30)
         
     def special_ability(self):
         pass
     
 class John(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.time = 120
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, 120)
         
     def special_ability(self):
         pass
@@ -200,13 +212,38 @@ class Enemy(Creation):
     def death(self):
         if self.hp <= 0:
             game.enemylist.remove(self)
+            
+def drawMenu():
+    background(255, 255, 255)
+    fill(0)
+    textSize(50)
+    text('Choose your champion', 100, 100)
+    noFill()
+    rect(100, 200, 300, 100)
+    text('Jack', 200, 270)
+    rect(100, 400, 300, 100)
+    text('Jill', 200, 470)
+    rect(100, 600, 300, 100)
+    text('John', 200, 670)
+    
+    pass
+
+def drawGame():
+    global game
+    background(255, 255, 255)
+    game.display()
+    if game.hero.time < 0:
+        game = Game(WIDTH, HEIGHT, 800)
         
 def setup():
     size(WIDTH, HEIGHT)
     
 def draw():
-    background(255, 255, 255)
-    game.display()
+    if gameScreen == 0:
+        drawMenu()
+    else:
+        drawGame()
+    
 
 def keyPressed():
     if keyCode == LEFT:
@@ -228,5 +265,19 @@ def keyReleased():
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
         
-game = Game(WIDTH, HEIGHT, 800)
-game.enemylist.append(Enemy(100, 50, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 50, 600, 100, 3))
+def mousePressed():
+    global gameScreen
+    global game
+    #Choose Jack
+    if gameScreen == 0 and 100<=mouseX<=400 and 200<=mouseY<=300:
+        game = Game(WIDTH, HEIGHT, 800, 'Jack')
+        gameScreen = 1
+    #Choose Jill
+    if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
+        game = Game(WIDTH, HEIGHT, 800, 'Jill')
+        gameScreen = 1
+    #Choose John
+    if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
+        game = Game(WIDTH, HEIGHT, 800, 'John')        
+        gameScreen = 1
+        
