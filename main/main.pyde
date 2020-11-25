@@ -12,7 +12,8 @@ class Game:
     def __init__(self, w, h, g, hero):
         self.w = w
         self.h = h
-        self.projectiles_list = []
+        self.enemy_projectiles = []
+        self.hero_projectiles = []
         self.enemylist = []
         self.g = g
         #random sprite for hero
@@ -28,6 +29,10 @@ class Game:
         self.hero.display()
         for e in self.enemylist:
             e.display()
+        for p in self.enemy_projectiles:
+            p.display()
+        for p in self.hero_projectiles:
+            p.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -212,6 +217,45 @@ class Enemy(Creation):
     def death(self):
         if self.hp <= 0:
             game.enemylist.remove(self)
+
+class Projectile(Creation):
+
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.vx = vx
+        self.vy = vy
+        self.framespan = framespan #How many frames should the projectile exist
+        self.framestart = frameCount() # When was the projectile created
+        self.gravity = gravity # Should gravity apply? T/F
+        self.dmg = dmg # How much damage should this projectile cause?
+
+    def update(self):
+
+        if frameCount%10 == 0:
+            self.frame = (self.frame + 1) % self.num_frames
+        
+        #slow down animation
+        if frameCount%10 == 0:
+            self.frame = (self.frame + 1) % self.num_frames
+        
+        if self.gravity == True:
+            self.gravity()
+            self.y += self.vy    
+        self.x += self.vx
+
+        # If the projectile exceeds its framespan, it ought not exist anymore
+        if frameCount() - self.framestart > self.framespan:
+            self.destroy()
+
+    def destroy(self):
+
+        if self in game.enemy_projectiles:
+            game.enemy_projectiles.remove(self)
+        elif self in game.hero_projectiles:
+            game.hero_projectiles.remove(self)
+        
+
+
             
 def drawMenu():
     background(255, 255, 255)
