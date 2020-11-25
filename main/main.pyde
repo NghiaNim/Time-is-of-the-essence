@@ -16,6 +16,9 @@ class Game:
         self.hero_projectiles = []
         self.enemylist = []
         self.g = g
+
+        self.enemylist.append(Enemy(300, 100, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 200, 800, 100, vx=3, follow=False, p_gravity=False))
+
         #random sprite for hero
         if hero == 'Jack':
             self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4)
@@ -189,15 +192,18 @@ class Enemy(Creation):
         self.xright = xr
         self.follow = follow
         self.hp = hp
-        self.attackspeed = aspd
+        self.attackspeed = aspd # How many frames must pass per attack?
         self.p_gravity = p_gravity
-
+        self.framestart = frameCount
         self.direction = random.choice([LEFT, RIGHT])
         if self.direction == LEFT:
             self.vx *= -1
 
     def update(self):
         Creation.update(self)
+        if frameCount - self.framestart > self.attackspeed:
+            self.attack()
+            self.framestart = frameCount
 
         if self.x < self.xleft:
             self.vx *= -1
@@ -206,13 +212,9 @@ class Enemy(Creation):
             self.vx *= -1
             self.direction = LEFT
 
-        if frameCount % self.attackspeed == 0:
-            pass
-            #self.attack()
-
     # Here we will be able to define the specifics of attacks 
     def attack(self):
-        game.projectiles_list.append(Projectile(placeholder))
+        game.enemy_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, self.vx*2, -6, 150, False, 10)) # Testing projectile
 
     def death(self):
         if self.hp <= 0:
@@ -225,9 +227,14 @@ class Projectile(Creation):
         self.vx = vx
         self.vy = vy
         self.framespan = framespan #How many frames should the projectile exist
-        self.framestart = frameCount() # When was the projectile created
-        self.gravity = gravity # Should gravity apply? T/F
+        self.framestart = frameCount # When was the projectile created
+        self.gravitycheck = gravity # Should gravity apply? T/F
         self.dmg = dmg # How much damage should this projectile cause?
+
+        if self.vx > 0:
+            self.direction = RIGHT
+        else:
+            self.direction = LEFT 
 
     def update(self):
 
@@ -238,13 +245,13 @@ class Projectile(Creation):
         if frameCount%10 == 0:
             self.frame = (self.frame + 1) % self.num_frames
         
-        if self.gravity == True:
+        if self.gravitycheck == True:
             self.gravity()
             self.y += self.vy    
         self.x += self.vx
 
         # If the projectile exceeds its framespan, it ought not exist anymore
-        if frameCount() - self.framestart > self.framespan:
+        if frameCount - self.framestart > self.framespan:
             self.destroy()
 
     def destroy(self):
@@ -253,6 +260,14 @@ class Projectile(Creation):
             game.enemy_projectiles.remove(self)
         elif self in game.hero_projectiles:
             game.hero_projectiles.remove(self)
+
+    def gravity(self):
+        if self.y + self.h >= self.g:
+            self.vy = 0
+        else:
+            self.vy += 0.15
+            if self.y + self.h + self.vy > self.g:
+                self.vy = self.g - (self.y + self.h)
         
 
 
