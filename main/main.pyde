@@ -17,7 +17,8 @@ class Game:
         self.enemylist = []
         self.g = g
 
-        self.enemylist.append(Enemy(300, 100, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 200, 800, 100, vx=3, follow=False, p_gravity=False))
+        # Testing enemy
+        self.enemylist.append(Enemy(300, 100, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 200, 800, 100, 3, 10, 5, 3, False, False))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -91,7 +92,7 @@ class Creation:
 class Hero(Creation):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, time):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False}
+        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False}
         self.standing_y = y
         self.standing_h = h
         self.direction = RIGHT
@@ -123,6 +124,9 @@ class Hero(Creation):
     
             if self.key_handler[UP] == True and self.y+self.h == self.g:
                 self.vy = -10
+
+        if self.key_handler['Q'] == True:
+            self.attack()
         
         #haven't added idle animation
         if frameCount%5 == 0 and self.vx != 0 and self.vy == 0:
@@ -173,6 +177,13 @@ class Hero(Creation):
         textSize(20)
         text('Remaining time: ' + str(self.time), 50, 30)
 
+    def attack(self):
+        if self.direction == LEFT:
+            p_vx = -1
+        elif self.direction == RIGHT:
+            p_vx = 1
+        game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 10))
+
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, 100)
@@ -196,7 +207,7 @@ class John(Hero):
         pass
 
 class Enemy(Creation):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, dmg_projectile, dmg_collision,attack_count, follow=False, p_gravity=False):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
         self.vx = vx
@@ -231,13 +242,15 @@ class Enemy(Creation):
             if self.collision_rect(p) == True:
                 self.hp -= p.dmg
 
+        if self.hp <= 0:
+            self.death()
+
     # Here we will be able to define the specifics of attacks 
     def attack(self):
         game.enemy_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, self.vx*2, -6, 150, False, 10)) # Testing projectile
 
     def death(self):
-        if self.hp <= 0:
-            game.enemylist.remove(self)
+        game.enemylist.remove(self)
 
 class Projectile(Creation):
 
@@ -331,7 +344,10 @@ def keyPressed():
     elif keyCode == UP:
         game.hero.key_handler[UP] = True
     elif keyCode == DOWN:
-        game.hero.key_handler[DOWN] = True    
+        game.hero.key_handler[DOWN] = True 
+    elif key == 'Q' or key == 'q':
+        game.hero.key_handler['Q'] = True
+
     
 def keyReleased():
     if keyCode == LEFT:
@@ -342,6 +358,8 @@ def keyReleased():
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
+    elif key == 'Q' or key == 'q':
+        game.hero.key_handler['Q'] = False
         
 def mousePressed():
     global gameScreen
