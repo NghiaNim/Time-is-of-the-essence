@@ -128,8 +128,20 @@ class Hero(Creation):
         if frameCount%5 == 0 and self.vx != 0 and self.vy == 0:
             self.frame = (self.frame + 1) % self.num_frames
         elif self.vx == 0:
-            self.frame = 0    
-            
+            self.frame = 0
+
+        # check for collision caused by enemy projectiles
+        if self.key_handler[DOWN] == False:
+            for p in game.enemy_projectiles:
+                if self.collision_rect(p) == True:
+                    self.time -= p.dmg
+        
+        # collision detection with enemies
+        for e in game.enemylist:
+            if self.collision_rect(e) == True:
+                self.time -= e.dmg_collision
+
+
         self.x += self.vx
         self.y += self.vy
         self.standing_y += self.vy
@@ -184,18 +196,21 @@ class John(Hero):
         pass
 
 class Enemy(Creation):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, follow=False, p_gravity=False):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx=3, dmg_projectile, dmg_collision,attack_count, follow=False, p_gravity=False):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
         self.vx = vx
-        self.xleft = xl
-        self.xright = xr
-        self.follow = follow
+        self.xleft = xl #left X boundary
+        self.xright = xr # right x boundary
+        self.follow = follow # should the enemy follow the hero if in sight?
         self.hp = hp
         self.attackspeed = aspd # How many frames must pass per attack?
-        self.p_gravity = p_gravity
-        self.framestart = frameCount
+        self.p_gravity = p_gravity # should the gravity apply on its projectiles
+        self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
+        self.dmg_collision = dmg_collision
+        self.dmg_projectile = dmg_projectile
+        self.attack_count = attack_count
         if self.direction == LEFT:
             self.vx *= -1
 
@@ -211,6 +226,10 @@ class Enemy(Creation):
         elif self.x > self.xright:
             self.vx *= -1
             self.direction = LEFT
+
+        for p in game.hero_projectiles:
+            if self.collision_rect(p) == True:
+                self.hp -= p.dmg
 
     # Here we will be able to define the specifics of attacks 
     def attack(self):
