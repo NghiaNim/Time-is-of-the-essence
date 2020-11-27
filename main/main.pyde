@@ -99,6 +99,10 @@ class Hero(Creation):
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.idle_num_frames = idle_num_frames
         self.time = time
+        self.collission_countdown = 30 # How for how many frames should be hero invincible after detecting collsion?
+        self.col_framestamp = frameCount
+        self.shootingspeed = 30 # Cooldown for shooting in frames
+        self.shoot_framestamp = frameCount
 
     def update(self):
         self.gravity()
@@ -135,15 +139,18 @@ class Hero(Creation):
             self.frame = 0
 
         # check for collision caused by enemy projectiles
-        if self.key_handler[DOWN] == False:
+        if self.key_handler[DOWN] == False and frameCount - self.col_framestamp >= self.collission_countdown:
             for p in game.enemy_projectiles:
                 if self.collision_rect(p) == True:
                     self.time -= p.dmg
+                    self.col_framestamp = frameCount
         
         # collision detection with enemies
-        for e in game.enemylist:
-            if self.collision_rect(e) == True:
-                self.time -= e.dmg_collision
+        if frameCount - self.col_framestamp >= self.collission_countdown:
+            for e in game.enemylist:
+                if self.collision_rect(e) == True:
+                    self.time -= e.dmg_collision
+                    self.col_framestamp = frameCount
 
 
         self.x += self.vx
@@ -182,7 +189,9 @@ class Hero(Creation):
             p_vx = -1
         elif self.direction == RIGHT:
             p_vx = 1
-        game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 10))
+        if frameCount - self.shoot_framestamp > self.shootingspeed:
+            self.shoot_framestamp = frameCount
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 10))
 
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames):
