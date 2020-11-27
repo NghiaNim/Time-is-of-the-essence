@@ -116,7 +116,7 @@ class Hero(Creation):
             self.hit_right = False
 
 
-        #if the player has i-frames, he can't be damaged
+        #the player get hits, he won't be able to move for 35 frames but will retain invincibility for 25 more frames
         if self.invincible < 25:
             if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
                 self.vx = 0
@@ -137,7 +137,8 @@ class Hero(Creation):
         
                 if self.key_handler[UP] == True and self.y+self.h == self.g:
                     self.vy = -10
-
+        
+        #knockback on hit
         else:
             if self.invincible == 59:
                 self.vy = -5
@@ -146,6 +147,7 @@ class Hero(Creation):
             else:
                 self.vx = -7
         
+        #animation based on action
         if frameCount%10 == 0 and self.vx == 0:
             self.frame = (self.frame + 1) % self.idle_num_frames
         elif frameCount%10 == 0 and self.vx != 0 and self.vy == 0:
@@ -165,11 +167,13 @@ class Hero(Creation):
         
         for enemy in game.enemy_projectiles:
             if self.collision_rect_right(enemy) and self.invincible <= 0:
+                enemy.destroy()
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.hit_right = True
 
             elif self.collision_rect_left(enemy) and self.invincible <= 0:
+                enemy.destroy()
                 self.time -= enemy.dmg
                 self.invincible = 60
 
@@ -327,6 +331,7 @@ class Projectile(Creation):
             
 def drawMenu():
     background(255, 255, 255)
+    stroke(0,0,0)
     fill(0)
     textSize(50)
     text('Choose your champion', 100, 100)
@@ -337,7 +342,17 @@ def drawMenu():
     text('Jill', 200, 470)
     rect(100, 600, 300, 100)
     text('John', 200, 670)
+    if 100<=mouseX<=400 and 200<=mouseY<=300:
+        stroke(0,255,0)
+        rect(100, 200, 300, 100)
     
+    elif 100<=mouseX<=400 and 400<=mouseY<=500:
+        stroke(0,255,0)
+        rect(100, 400, 300, 100)
+    
+    elif 100<=mouseX<=400 and 600<=mouseY<=700:
+        stroke(0,255,0)
+        rect(100, 600, 300, 100)
     pass
 
 def drawGame():
