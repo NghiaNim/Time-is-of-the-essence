@@ -243,18 +243,6 @@ class Hero(Creation):
         textSize(20)
         text('Remaining time: ' + str(self.time), 50, 30)
 
-    def collision_rect_right(self, target):
-        if target.x < self.x < target.x + target.w and (self.y < target.y + target.h) and (self.y + self.h > target.y):
-            return True
-        else:
-            return False
-
-    def collision_rect_left(self, target):
-        if target.x < self.x + self.w < target.x + target.w and (self.y < target.y + target.h) and (self.y + self.h > target.y):
-            return True
-        else:
-            return False
-
     def attack(self):
         if self.direction == LEFT:
             p_vx = -1
