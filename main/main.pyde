@@ -140,6 +140,9 @@ class Hero(Creation):
         
         #knockback on hit
         else:
+            if self.key_handler[DOWN] == True:
+                self.y = self.standing_y
+                self.h = self.standing_h
             if self.invincible == 59:
                 self.vy = -5
             if self.hit_right and (self.y + self.h < self.g):
@@ -193,7 +196,11 @@ class Hero(Creation):
         rect(self.x, self.y, self.w, self.h)
         
         
-        if self.invincible > 0 and self.direction == RIGHT:
+        if self.key_handler[DOWN] == True and self.y+self.h == self.g:
+            #no animation for crouching yet
+            
+            pass
+        elif self.invincible > 0 and self.direction == RIGHT:
             image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 1 * self.img_w, 0, 2 *self.img_w - 18, self.img_h)
 
         
@@ -201,10 +208,7 @@ class Hero(Creation):
             image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 2 * self.img_w - 18, 0, 1 * self.img_w, self.img_h)
 
 
-        elif self.key_handler[DOWN] == True and self.y+self.h == self.g:
-            #no animation for crouching yet
-            
-            pass
+
 
         #4 frames of idle but currently only 1
         #Won't implement the rest if this is not a fitting sprite
@@ -274,7 +278,7 @@ class Enemy(Creation):
 
     # Here we will be able to define the specifics of attacks 
     def attack(self):
-        game.enemy_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, self.vx*2, -6, 150, False, 10)) # Testing projectile
+        game.enemy_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.g, "bone.png", 10, 10, 4, self.vx*2, -6, 150, False, 10)) # Testing projectile
 
     def death(self):
         if self.hp <= 0:
