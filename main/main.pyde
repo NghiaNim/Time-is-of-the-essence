@@ -159,7 +159,7 @@ class Hero(Creation):
             if self.hit_right and (self.y + self.h < self.g):
                 self.vx = 7
             else:
-                self.vx = 0
+                self.vx = -7
     
             if self.key_handler[UP] == True and self.y+self.h == self.g:
                 self.vy = -10
@@ -172,8 +172,6 @@ class Hero(Creation):
             self.frame = (self.frame + 1) % self.idle_num_frames
         elif frameCount%10 == 0 and self.vx != 0 and self.vy == 0:
             self.frame = (self.frame + 1) % self.num_frames
-        elif self.vx == 0:
-            self.frame = 0
 
         #check for hit
         for enemy in game.enemylist:
