@@ -17,7 +17,8 @@ class Game:
         self.enemylist = []
         self.g = g
 
-        self.enemylist.append(Enemy(300, 100, 64, 66, 800, "ghost.png", "ghost_shriek.png", 64, 66, 7, 4, 4, 180, 200, 800, 100, 3, 10, 5, 3, False, False))
+        #Enemy Test
+        self.enemylist.append(TimeWraith(300, 700, 800, 200, 800))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -281,6 +282,7 @@ class Enemy(Creation):
 
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.idle_frame = 0
+        self.idle_count = 0
         self.num_idle_frames = num_idle_frames
         self.attack_frame = attack_frame
         self.idle = False
@@ -291,6 +293,7 @@ class Enemy(Creation):
         self.follow = follow # should the enemy follow the hero if in sight?
         self.hp = hp
         self.attackspeed = aspd # How many frames must pass per attack?
+        self.projectile_bol = True
         self.projectile_speed = 4
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.framestart = frameCount 
@@ -306,14 +309,16 @@ class Enemy(Creation):
     def update(self):
         Creation.update(self)
 
-        # Attacking loop (enemy will stop to attack)
+        # Idle and attack loop (enemy will stop to attack)
         if frameCount - self.framestart > self.attackspeed:
             if self.idle == False:
                 self.tmp_vx = self.vx
                 self.vx = 0
                 self.idle = True
-            if self.attack_frame-1 == self.idle_frame:
-                self.attack()
+            if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                if self.projectile_bol == True: #Does the enemy shoot projectiles?
+                    self.attack()
+            if self.idle_count-1 == self.num_idle_frames:
                 self.framestart = frameCount
                 self.vx = self.tmp_vx
                 self.idle = False
@@ -334,8 +339,10 @@ class Enemy(Creation):
         # slow down idle frames
         if self.vx == 0 and frameCount%10 == 0:
             self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
+            self.idle_count += 1
         elif self.vx != 0:
             self.idle_frame = 0
+            self.idle_count = 0
 
 
         if self.hp <= 0:
@@ -358,18 +365,22 @@ class Enemy(Creation):
             game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, 10))
         elif self.direction == RIGHT:
             game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, 10))
-         # Testing projectile
+    
+    def follow(self):
+        if ((game.hero.x - self.x)**2 + (game.hero.y - self.y)**2)**0.5 < self.followdistance:
+            if game.hero.x < self.x:
+                self.vx = 0
 
     def death(self):
         game.enemylist.remove(self)
 
-class TimeWrath(Enemy):
+class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 64, 66, g, "ghost.png", "ghost_shriek.png", 64, 66, 7, 4, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, False, False)
+        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", 64, 66, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, False, False)
 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, self.projectile_speed*-1))
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed))
         elif self.direction == RIGHT:
             game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed))
 
@@ -420,8 +431,8 @@ class Projectile(Creation):
                 self.vy = self.g - (self.y + self.h)
 
 class ClockProjectile(Projectile):
-    def __init__(x, y, g, projectile_speed):
-        Projectile.__init__(x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, 10)
+    def __init__(self, x, y, g, projectile_speed):
+        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, 10)
 
             
 def drawMenu():
