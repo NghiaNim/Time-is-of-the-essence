@@ -276,7 +276,7 @@ class John(Hero):
 
 class Enemy(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_w, img_h, num_frames, num_idle_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False, followdistance=0):
+    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False, followdistance=0):
 
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
@@ -286,6 +286,11 @@ class Enemy(Creation):
         self.num_idle_frames = num_idle_frames
         self.attack_frame = attack_frame
         self.idle = False
+
+        self.img_death = loadImage(path + "/images/" + img_name_death)
+        self.num_death_frames = num_death_frames
+        self.death_frame = 0
+
         self.dmg = dmg_collision # collision damage
         self.vx = vx
         self.xleft = xl #left X boundary
@@ -299,7 +304,7 @@ class Enemy(Creation):
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
-        #self.dmg_collision = dmg_collision
+        self.alive = True
         self.dmg_projectile = dmg_projectile
         self.attack_count = attack_count
         if self.direction == LEFT:
@@ -308,65 +313,78 @@ class Enemy(Creation):
         self.tmp_vx = 0
 
     def update(self):
-        self.gravity()
+        if self.alive == True:
+            self.gravity()
 
-        # Idle and attack loop (enemy will stop to attack)
-        if frameCount - self.framestart > self.attackspeed:
-            if self.idle == False:
-                self.tmp_vx = self.vx
-                self.vx = 0
-                self.idle = True
-            if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
-                if self.projectile_bol == True: #Does the enemy shoot projectiles?
-                    self.attack()
-            if self.idle_count-1 == self.num_idle_frames:
-                self.framestart = frameCount
-                self.vx = self.tmp_vx
-                self.idle = False
+            # Idle and attack loop (enemy will stop to attack)
+            if frameCount - self.framestart > self.attackspeed:
+                if self.idle == False:
+                    self.tmp_vx = self.vx
+                    self.vx = 0
+                    self.idle = True
+                if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                    if self.projectile_bol == True: #Does the enemy shoot projectiles?
+                        self.attack()
+                if self.idle_count-1 == self.num_idle_frames:
+                    self.framestart = frameCount
+                    self.vx = self.tmp_vx
+                    self.idle = False
 
-        if self.follow_bol == True:
-            self.follow()
+            if self.follow_bol == True:
+                self.follow()
 
-        if self.x+self.vx < self.xleft:
-            self.vx *= -1
-            self.direction = RIGHT
-        elif self.x+self.vx > self.xright:
-            self.vx *= -1
-            self.direction = LEFT
+            if self.x+self.vx < self.xleft:
+                self.vx *= -1
+                self.direction = RIGHT
+            elif self.x+self.vx > self.xright:
+                self.vx *= -1
+                self.direction = LEFT
 
-        for p in game.hero_projectiles:
-            if self.collision_rect(p) == True:
-                self.hp -= p.dmg
-                p.destroy()
+            for p in game.hero_projectiles:
+                if self.collision_rect(p) == True:
+                    self.hp -= p.dmg
+                    p.destroy()
 
-        #slow down animation
-        if frameCount%10 == 0:
-            self.frame = (self.frame + 1) % self.num_frames
-        # slow down idle frames
-        if self.vx == 0 and frameCount%10 == 0:
-            self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
-            self.idle_count += 1
-        elif self.vx != 0:
-            self.idle_frame = 0
-            self.idle_count = 0
+            #slow down animation
+            if frameCount%10 == 0:
+                self.frame = (self.frame + 1) % self.num_frames
+            # slow down idle frames
+            if self.vx == 0 and frameCount%10 == 0:
+                self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
+                self.idle_count += 1
+            elif self.vx != 0:
+                self.idle_frame = 0
+                self.idle_count = 0
 
-        if self.hp <= 0:
-            self.death()
+            if self.hp <= 0:
+                self.death()
 
-        if self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
-            self.x += self.vx
-        self.y += self.vy
+            if self.alive == True and self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
+                self.x += self.vx
+            self.y += self.vy
+        elif self.alive == False:
+            if frameCount%10 == 0:
+                self.death_frame = self.death_frame + 1
+                if self.death_frame >= self.num_death_frames:
+                    self.destroy()
 
     def display(self):
-        self.update()       
-        if self.vx != 0 and self.direction == RIGHT:
-            image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
-        elif self.vx != 0 and self.direction == LEFT:
-            image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
-        elif self.vx == 0 and self.direction == RIGHT:
-            image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
-        elif self.vx == 0 and self.direction == LEFT:
-            image(self.img_idle, self.x, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        self.update() 
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
 
     # Here we will be able to define the specifics of attacks 
     def attack(self):
@@ -396,11 +414,14 @@ class Enemy(Creation):
 
 
     def death(self):
+        self.alive = False
+
+    def destroy(self):
         game.enemylist.remove(self)
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", 64, 66, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, False, False, 0)
+        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, True, False, 200)
 
     def attack(self):
         if self.direction == LEFT:
