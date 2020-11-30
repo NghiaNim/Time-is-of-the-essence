@@ -280,36 +280,37 @@ class Enemy(Creation):
 
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
+        # Attributes for idle animations
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.idle_frame = 0
         self.idle_count = 0
         self.num_idle_frames = num_idle_frames
         self.attack_frame = attack_frame
         self.idle = False
-
+        # Attributes for death animations
         self.img_death = loadImage(path + "/images/" + img_name_death)
         self.num_death_frames = num_death_frames
         self.death_frame = 0
-
-        self.dmg = dmg_collision # collision damage
-        self.vx = vx
-        self.xleft = xl #left X boundary
-        self.xright = xr # right x boundary
-        self.follow_bol = follow # should the enemy follow the hero if in sight?
-        self.followdistance = followdistance
-        self.hp = hp
+        # Atributes for attacks and behaviour
+        self.alive = True
+        self.hp = hp # Health points
+        self.dmg = dmg_collision # Collision damage
+        self.follow_bol = follow # Should the enemy follow the hero if within distance
+        self.followdistance = followdistance # Following distance
         self.attackspeed = aspd # How many frames must pass per attack?
-        self.projectile_bol = True
-        self.projectile_speed = 4
+        self.projectile_bol = True # Does the enemy cast projectiles?
+        self.projectile_speed = 4 # VX attribute of the casted projectile
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
+        self.dmg_projectile = dmg_projectile # Projectile dmg
+        # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
-        self.alive = True
-        self.dmg_projectile = dmg_projectile
         self.attack_count = attack_count
         if self.direction == LEFT:
             self.vx *= -1
-
+        self.vx = vx
+        self.xleft = xl #left X boundary
+        self.xright = xr # right x boundary
         self.tmp_vx = 0
 
     def update(self):
@@ -389,9 +390,9 @@ class Enemy(Creation):
     # Here we will be able to define the specifics of attacks 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, 10))
+            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, 10))
+            game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
     
     def follow(self):
 
@@ -425,9 +426,9 @@ class TimeWraith(Enemy):
 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed))
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
 
 class Projectile(Creation):
 
@@ -476,8 +477,8 @@ class Projectile(Creation):
                 self.vy = self.g - (self.y + self.h)
 
 class ClockProjectile(Projectile):
-    def __init__(self, x, y, g, projectile_speed):
-        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, 10)
+    def __init__(self, x, y, g, projectile_speed, dmg):
+        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
 
             
 def drawMenu():
