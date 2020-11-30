@@ -17,7 +17,8 @@ class Game:
         self.enemylist = []
         self.g = g
 
-        self.enemylist.append(Enemy(300, 100, 50, 50, 800, "skeleton.png", 50, 50, 8, 180, 200, 800, 100, 3, 10, 5, 3, False, False))
+        #Enemy Test
+        self.enemylist.append(TimeWraith(300, 700, 800, 200, 800))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -164,6 +165,7 @@ class Hero(Creation):
             if self.key_handler[UP] == True and self.y+self.h == self.g:
                 self.vy = -10
 
+        #Attack Handler
         if self.key_handler['Q'] == True:
             self.attack()
         
@@ -274,53 +276,159 @@ class John(Hero):
 
 class Enemy(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False):
+    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False, followdistance=0):
 
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
-        self.dmg = dmg_collision # collision damage
-        self.vx = vx
-        self.xleft = xl #left X boundary
-        self.xright = xr # right x boundary
-        self.follow = follow # should the enemy follow the hero if in sight?
-        self.hp = hp
+        # Attributes for idle animations
+        self.img_idle = loadImage(path + "/images/" + img_name_idle)
+        self.idle_frame = 0
+        self.idle_count = 0
+        self.num_idle_frames = num_idle_frames
+        self.attack_frame = attack_frame
+        self.idle = False
+        # Attributes for death animations
+        self.img_death = loadImage(path + "/images/" + img_name_death)
+        self.num_death_frames = num_death_frames
+        self.death_frame = 0
+        # Atributes for attacks and behaviour
+        self.alive = True
+        self.hp = hp # Health points
+        self.dmg = dmg_collision # Collision damage
+        self.follow_bol = follow # Should the enemy follow the hero if within distance
+        self.followdistance = followdistance # Following distance
         self.attackspeed = aspd # How many frames must pass per attack?
+        self.projectile_bol = True # Does the enemy cast projectiles?
+        self.projectile_speed = 4 # VX attribute of the casted projectile
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
+        self.dmg_projectile = dmg_projectile # Projectile dmg
+        # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
-        #self.dmg_collision = dmg_collision
-        self.dmg_projectile = dmg_projectile
         self.attack_count = attack_count
         if self.direction == LEFT:
             self.vx *= -1
+        self.vx = vx
+        self.xleft = xl #left X boundary
+        self.xright = xr # right x boundary
+        self.tmp_vx = 0
 
     def update(self):
-        Creation.update(self)
-        if frameCount - self.framestart > self.attackspeed:
-            self.attack()
-            self.framestart = frameCount
+        if self.alive == True:
+            self.gravity()
 
-        if self.x < self.xleft:
-            self.vx *= -1
-            self.direction = RIGHT
-        elif self.x > self.xright:
-            self.vx *= -1
-            self.direction = LEFT
+            # Idle and attack loop (enemy will stop to attack)
+            if frameCount - self.framestart > self.attackspeed:
+                if self.idle == False:
+                    self.tmp_vx = self.vx
+                    self.vx = 0
+                    self.idle = True
+                if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                    if self.projectile_bol == True: #Does the enemy shoot projectiles?
+                        self.attack()
+                if self.idle_count-1 == self.num_idle_frames:
+                    self.framestart = frameCount
+                    self.vx = self.tmp_vx
+                    self.idle = False
 
-        for p in game.hero_projectiles:
-            if self.collision_rect(p) == True:
-                self.hp -= p.dmg
-                p.destroy()
+            if self.follow_bol == True:
+                self.follow()
 
-        if self.hp <= 0:
-            self.death()
+            if self.x+self.vx < self.xleft:
+                self.vx *= -1
+                self.direction = RIGHT
+            elif self.x+self.vx > self.xright:
+                self.vx *= -1
+                self.direction = LEFT
+
+            for p in game.hero_projectiles:
+                if self.collision_rect(p) == True:
+                    self.hp -= p.dmg
+                    p.destroy()
+
+            #slow down animation
+            if frameCount%10 == 0:
+                self.frame = (self.frame + 1) % self.num_frames
+            # slow down idle frames
+            if self.vx == 0 and frameCount%10 == 0:
+                self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
+                self.idle_count += 1
+            elif self.vx != 0:
+                self.idle_frame = 0
+                self.idle_count = 0
+
+            if self.hp <= 0:
+                self.death()
+
+            if self.alive == True and self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
+                self.x += self.vx
+            self.y += self.vy
+        elif self.alive == False:
+            if frameCount%10 == 0:
+                self.death_frame = self.death_frame + 1
+                if self.death_frame >= self.num_death_frames:
+                    self.destroy()
+
+    def display(self):
+        self.update() 
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
 
     # Here we will be able to define the specifics of attacks 
     def attack(self):
-        game.enemy_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.g, "bone.png", 10, 10, 4, self.vx*2, -6, 150, False, 10)) # Testing projectile
+        if self.direction == LEFT:
+            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
+        elif self.direction == RIGHT:
+            game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
+    
+    def follow(self):
+
+        if ((game.hero.x - self.x)**2 + (game.hero.y - self.y)**2)**0.5 < self.followdistance: # Is the enemy in the follow distance?
+            if game.hero.x < self.x: # Is the enemy to the left?
+                if self.vx > 0: # Is the enemy going the opposite direction?
+                    self.vx *= -1
+                    self.direction = LEFT
+                elif self.vx < 0: # 
+                    pass
+                    #potentional new behaviour
+            elif game.hero > self.x: # Is the enemy to the right?
+                if self.vx < 0: # Is the enemy going the opposite direction?
+                    self.vx *= -1
+                    self.direction = RIGHT
+                elif self.vx > 0:
+                    pass
+        else:
+            pass
+
 
     def death(self):
+        self.alive = False
+
+    def destroy(self):
         game.enemylist.remove(self)
+
+class TimeWraith(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, True, False, 200)
+
+    def attack(self):
+        if self.direction == LEFT:
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
+        elif self.direction == RIGHT:
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
 
 class Projectile(Creation):
 
@@ -367,8 +475,10 @@ class Projectile(Creation):
             self.vy += 0.15
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
-        
 
+class ClockProjectile(Projectile):
+    def __init__(self, x, y, g, projectile_speed, dmg):
+        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
 
             
 def drawMenu():
