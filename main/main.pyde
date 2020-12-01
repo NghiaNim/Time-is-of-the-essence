@@ -22,11 +22,11 @@ class Game:
 
         #random sprite for hero
         if hero == 'Jack':
-            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3)
+            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 10, 5)
         elif hero == 'Jill':
-            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3)
+            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 20, 5)
         elif hero == 'John':
-            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3)
+            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 10, 5)
     
     
     def display(self):
@@ -101,9 +101,9 @@ class Creation:
 
 
 class Hero(Creation):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, time):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, time, dmg, speed):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False}
+        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False, 'P':False}
         self.standing_y = y
         self.standing_h = h
         self.direction = RIGHT
@@ -111,13 +111,31 @@ class Hero(Creation):
         self.img_hurt = loadImage(path + '/images/' + img_name_hurt)
         self.idle_num_frames = idle_num_frames
         self.hurt_num_frames = hurt_num_frames
+
         self.time = time
+        
         self.collission_countdown = 30 # How for how many frames should be hero invincible after detecting collsion?
         self.col_framestamp = frameCount
-        self.shootingspeed = 30 # Cooldown for shooting in frames
+
+        self.base_shootingspeed = 10
+        self.shootingspeed = 10 # Cooldown for shooting in frames
         self.shoot_framestamp = frameCount
+        
         self.invincible = 0
+        
         self.hit_right = False
+        self.dmg = dmg
+        self.base_dmg = dmg #default weapon damage
+        self.active_ability_time = 0
+        self.active_ability_cooldown = 0
+        self.bullet_img = 'bullet.png'
+
+        self.base_speed = speed
+        self.speed = speed
+
+        self.active_speed = 0 #for speed buff
+        self.active_damage = 0 #for damage buff
+        self.active_shooting_speed = 0 #for shooting speed buff
 
     def update(self):
         self.gravity()
@@ -127,6 +145,20 @@ class Hero(Creation):
         if self.invincible < 0:
             self.hit_right = False
 
+        if self.active_damage == 0:
+            self.dmg = self.base_dmg
+        elif frameCount %60 == 0:
+            self.active_damage -= 1
+        
+        if self.active_speed == 0:
+            self.speed = self.base_speed
+        elif frameCount %60 == 0:
+            self.active_speed -= 1
+
+        if self.active_shooting_speed == 0:
+            self.shootingspeed = self.base_shootingspeed
+        elif frameCount %60 == 0:
+            self.active_shooting_speed -= 1
 
         #the player get hits, he won't be able to move for 35 frames but will retain invincibility for 25 more frames
         if self.invincible < 25:
@@ -139,16 +171,22 @@ class Hero(Creation):
                 self.h = self.standing_h
                 
                 if self.key_handler[LEFT]:
-                    self.vx = -10
+                    self.vx = -self.speed
                     self.direction = LEFT
                 elif self.key_handler[RIGHT]:
-                    self.vx = 10
+                    self.vx = self.speed
                     self.direction = RIGHT
                 else:
                     self.vx = 0
         
                 if self.key_handler[UP] == True and self.y+self.h == self.g:
                     self.vy = -10
+
+                if self.key_handler['P'] == True:
+                    self.special_ability()
+
+                if self.key_handler['Q'] == True:
+                    self.attack()
         
         #knockback on hit
         else:
@@ -166,8 +204,7 @@ class Hero(Creation):
                 self.vy = -10
 
         #Attack Handler
-        if self.key_handler['Q'] == True:
-            self.attack()
+
         
         #animation based on action
         if frameCount%10 == 0 and self.vx == 0:
@@ -250,26 +287,46 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 10))
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, self.bullet_img, 16, 16, 5, 5*p_vx, -6, 150, False, self.dmg))
+
+    def invincible_buff(self, time):
+        self.invincible = 10*60
+
+    def damage_buff(self, time):
+        self.dmg *= 2
+        self.active_damage = time
+
+    def shooting_speed_buff(self, time):
+        self.shootingspeed /= 2
+        self.active_shooting_speed = time
+
+    def speed_buff(self,time):
+        self.shootingspeed /= 2
+        self.active_speed = time
 
 class Jack(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 100)
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 100, dmg, speed)
 
         
     def special_ability(self):
         pass
     
 class Jill(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 30)
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 30, dmg, speed)
+
+    def special_ability(self): #buffed for 7 seconds
+        self.invincible_buff(7)
+        self.damage_buff(7)
+        self.shooting_speed_buff(7)
+
         
-    def special_ability(self):
         pass
     
 class John(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 120)
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 120, dmg, speed)
         
     def special_ability(self):
         pass
@@ -535,8 +592,13 @@ def keyPressed():
         game.hero.key_handler[DOWN] = True 
     elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = True
+    elif key == 'P' or key == 'p':
+        game.hero.key_handler['P'] = True
 
-    
+def keyClicked():
+    if key == 'Q' or key == 'q':
+        game.hero.key_handler['Q'] = True
+
 def keyReleased():
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = False
