@@ -341,9 +341,13 @@ class Enemy(Creation):
                 self.vx *= -1
                 self.direction = LEFT
 
+            # Collision with projectiles
             for p in game.hero_projectiles:
-                if self.collision_rect(p) == True:
-                    self.hp -= p.dmg
+                if self.collision_rect_left(p) == True:
+                    self.damage(p.dmg, LEFT)
+                    p.destroy()
+                elif self.collision_rect_right(p) == True:
+                    self.damage(p.dmg, RIGHT)
                     p.destroy()
 
             #slow down animation
@@ -416,6 +420,11 @@ class Enemy(Creation):
 
     def death(self):
         self.alive = False
+
+    def damage(self, dmg, dir): 
+        self.hp -= dmg
+        self.vy -= 3
+
 
     def destroy(self):
         game.enemylist.remove(self)
