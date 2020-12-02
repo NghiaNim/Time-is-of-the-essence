@@ -20,7 +20,10 @@ class Game:
         self.g = g
 
         #Enemy Test
-        self.enemylist.append(TimeWraith(300, 700, 800, 200, 800))
+        self.enemylist.append(TimeWraith(220, 700, 800, 200, 800))
+        #obstacle test self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.obstaclelist.append(Obstacle(500, 752, 24, 24, "block.png", 24, 24))
+        self.obstaclelist.append(Obstacle(500, 776, 24, 24, "block.png", 24, 24))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -41,6 +44,8 @@ class Game:
             p.display()
         for i in self.itemlist:
             i.display()
+        for o in self.obstaclelist:
+            o.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -311,9 +316,9 @@ class Enemy(Creation):
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
         self.attack_count = attack_count
+        self.vx = vx
         if self.direction == LEFT:
             self.vx *= -1
-        self.vx = vx
         self.xleft = xl #left X boundary
         self.xright = xr # right x boundary
         self.tmp_vx = 0
@@ -336,15 +341,27 @@ class Enemy(Creation):
                     self.vx = self.tmp_vx
                     self.idle = False
 
+            # If the enemy should follow the hero this will change its direction
             if self.follow_bol == True:
                 self.follow()
 
+            # Checks for the "boundaries"
             if self.x+self.vx < self.xleft:
                 self.vx *= -1
                 self.direction = RIGHT
             elif self.x+self.vx > self.xright:
                 self.vx *= -1
                 self.direction = LEFT
+
+            # Check for obstacles
+            for o in game.obstaclelist:
+                # Check if it passes from left to right:
+                if self.x + self.vx >= o.x and self.x + self.vx <= o.x + o.w:
+                    self.vx *= -1
+                    if self.direction == LEFT:
+                        self.direction = RIGHT
+                    else:
+                        self.direction = LEFT
 
             for p in game.hero_projectiles:
                 if self.collision_rect(p) == True:
@@ -365,7 +382,7 @@ class Enemy(Creation):
             if self.hp <= 0:
                 self.death()
 
-            if self.alive == True and self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
+            if self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
                 self.x += self.vx
             self.y += self.vy
         elif self.alive == False:
@@ -376,6 +393,7 @@ class Enemy(Creation):
 
     def display(self):
         self.update() 
+        rect(self.x, self.y, self.w, self.h)
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -430,13 +448,32 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, 100, True, False, 200)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, 100, True, False, 200)
 
     def attack(self):
         if self.direction == LEFT:
             game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
             game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
+
+    # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
+    def display(self):
+        self.update()
+        rect(self.x, self.y, self.w, self.h) 
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-14, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-14, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-14, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-14, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
 class Projectile(Creation):
 
@@ -514,13 +551,22 @@ class TimeItem(Item):
 
 class Obstacle(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
-        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+    def __init__(self, x, y, w, h, img_name, img_w, img_h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.vx = 0
+        self.vy = 0
+        self.img = loadImage(path + "/images/" + img_name)
+        self.img_w = img_w
+        self.img_h = img_h
+        self.num_frames = 1
+        self.frame= 0
         self.direction = RIGHT
 
     def update(self):
-        Creation.update(self)
-
+        
         # Destroy all projectiles that hit the obstacle
         for p in game.enemy_projectiles:
             if self.collision_rect(p):
