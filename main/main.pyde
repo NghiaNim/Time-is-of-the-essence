@@ -68,6 +68,13 @@ class Creation:
             self.vy += 0.3
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
+
+        for o in game.obstaclelist:
+            if self.y + self.h <= o.y and self.x + self.w >= o.x and self.x - self.w <= o.x + o.w:
+                self.g = o.y
+                break
+            else:
+                self.g = game.g
                 
     def update(self):
         self.gravity()
@@ -82,6 +89,12 @@ class Creation:
     # Simple collision detection, doesn't check for side (needed for enemies class)
     def collision_rect(self, target):
         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+            return True
+        else:
+            return False
+
+    def collision_future(self, target):
+        if (self.x + self.vx < target.x + target.w) and (self.x + self.w + self.vx > target.x) and (self.y + self.vy < target.y + target.h) and (self.y + self.vy + self.h > target.y):
             return True
         else:
             return False
@@ -207,8 +220,10 @@ class Hero(Creation):
                 self.time -= projectile.dmg
                 self.invincible = 60
 
-        self.x += self.vx
-        self.y += self.vy
+        for o in game.obstaclelist:
+            if self.collision_future(o) == False:
+                self.x += self.vx
+                self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
 
