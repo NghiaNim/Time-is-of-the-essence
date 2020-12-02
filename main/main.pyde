@@ -15,6 +15,7 @@ class Game:
         self.enemy_projectiles = []
         self.hero_projectiles = []
         self.enemylist = []
+        self.itemlist = []
         self.g = g
 
         #Enemy Test
@@ -37,6 +38,8 @@ class Game:
             p.display()
         for p in self.hero_projectiles:
             p.display()
+        for i in self.itemlist:
+            i.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -112,7 +115,7 @@ class Hero(Creation):
         self.idle_num_frames = idle_num_frames
         self.hurt_num_frames = hurt_num_frames
         self.time = time
-        self.collission_countdown = 30 # How for how many frames should be hero invincible after detecting collsion?
+        self.collission_countdown = 30 # How for how many frames should be hero invincible after detecting collision?
         self.col_framestamp = frameCount
         self.shootingspeed = 30 # Cooldown for shooting in frames
         self.shoot_framestamp = frameCount
@@ -250,7 +253,7 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 10))
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 20))
 
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames):
@@ -276,7 +279,7 @@ class John(Hero):
 
 class Enemy(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False, followdistance=0):
+    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, droprate, follow=False, p_gravity=False, followdistance=0):
 
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
@@ -302,6 +305,7 @@ class Enemy(Creation):
         self.projectile_speed = 4 # VX attribute of the casted projectile
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.dmg_projectile = dmg_projectile # Projectile dmg
+        self.droprate = droprate
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
@@ -418,11 +422,14 @@ class Enemy(Creation):
         self.alive = False
 
     def destroy(self):
+        rand_int = random.randint(0,100)
+        if rand_int < self.droprate:
+            game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
         game.enemylist.remove(self)
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, True, False, 200)
+        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, 100, True, False, 200)
 
     def attack(self):
         if self.direction == LEFT:
@@ -479,6 +486,31 @@ class Projectile(Creation):
 class ClockProjectile(Projectile):
     def __init__(self, x, y, g, projectile_speed, dmg):
         Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+
+class Item(Creation):
+
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, autopick):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.autopick = autopick
+        self.direction = RIGHT #This should be an attribute whether the item is going to be autopicked, but we could theoretically remove it whatsoever
+
+    def destroy(self):
+        game.itemlist.remove(self)
+
+class TimeItem(Item):
+
+    def __init__(self, x, y, g, time):
+        Item.__init__(self, x, y, 32, 32, g, "clockitem.png", 32, 32, 6, True)
+        self.time = time
+
+
+    def update(self):
+        Creation.update(self)
+
+        if self.collision_rect(game.hero) == True:
+            game.hero.time += self.time
+            self.destroy()
+
 
             
 def drawMenu():
