@@ -513,6 +513,16 @@ class Projectile(Creation):
         else:
             self.direction = LEFT 
 
+    # Projectiles will have stripped gravity as we don't want their ground level to change
+    def gravity(self):
+
+    if self.y + self.h >= self.g:
+                self.vy = 0
+            else:
+                self.vy += 0.3
+                if self.y + self.h + self.vy > self.g:
+                    self.vy = self.g - (self.y + self.h)
+
     def update(self):
 
         #slow down animation
