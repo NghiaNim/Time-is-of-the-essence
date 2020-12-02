@@ -16,6 +16,7 @@ class Game:
         self.hero_projectiles = []
         self.enemylist = []
         self.itemlist = []
+        self.obstaclelist = []
         self.g = g
 
         #Enemy Test
@@ -510,6 +511,23 @@ class TimeItem(Item):
         if self.collision_rect(game.hero) == True:
             game.hero.time += self.time
             self.destroy()
+
+class Obstacle(Creation):
+
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.direction = RIGHT
+
+    def update(self):
+        Creation.update(self)
+
+        # Destroy all projectiles that hit the obstacle
+        for p in game.enemy_projectiles:
+            if self.collision_rect(p):
+                p.destroy()
+        for p in game.hero_projectiles:
+            if self.collision_rect(p):
+                p.destroy()
 
 
             
