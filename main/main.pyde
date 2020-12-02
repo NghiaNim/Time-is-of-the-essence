@@ -417,7 +417,7 @@ class Enemy(Creation):
         if self.direction == LEFT:
             game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
+            game.enemy_projectiles.append(Projectile(self.x+self.w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
     
     def follow(self):
 
@@ -461,7 +461,7 @@ class TimeWraith(Enemy):
         if self.direction == LEFT:
             game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
 
     # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
     def display(self):
