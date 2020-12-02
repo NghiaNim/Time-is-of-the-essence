@@ -273,7 +273,7 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 20))
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, "bone.png", 10, 10, 4, 3*p_vx, -6, 150, False, 20))
 
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames):
@@ -430,9 +430,9 @@ class Enemy(Creation):
     # Here we will be able to define the specifics of attacks 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
+            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(Projectile(self.x+self.w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
+            game.enemy_projectiles.append(Projectile(self.x+self.w, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
     
     def follow(self):
 
@@ -474,9 +474,9 @@ class TimeWraith(Enemy):
 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+25, self.projectile_speed, self.dmg_projectile))
 
     # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
     def display(self):
@@ -499,8 +499,8 @@ class TimeWraith(Enemy):
 
 class Projectile(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
-        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+    def __init__(self, x, y, w, h, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
+        Creation.__init__(self, x, y, w, h, game.g, img_name, img_w, img_h, num_frames)
         self.vx = vx
         self.vy = vy
         self.framespan = framespan #How many frames should the projectile exist
@@ -544,8 +544,8 @@ class Projectile(Creation):
                 self.vy = self.g - (self.y + self.h)
 
 class ClockProjectile(Projectile):
-    def __init__(self, x, y, g, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+    def __init__(self, x, y, projectile_speed, dmg):
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
 
 class Item(Creation):
 
