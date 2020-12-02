@@ -21,7 +21,7 @@ class Game:
 
         #Enemy Test
         self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
-        #obstacle test self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        #obstacle test
         self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
         #random sprite for hero
@@ -348,7 +348,6 @@ class Enemy(Creation):
             if self.x+self.vx < self.xleft:
                 self.vx *= -1
                 self.direction = RIGHT
-                print("Debug")
             elif self.x+self.vx > self.xright:
                 self.vx *= -1
                 self.direction = LEFT
@@ -386,8 +385,7 @@ class Enemy(Creation):
             if self.hp <= 0:
                 self.death()
 
-            if self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
-                self.x += self.vx
+            self.x += self.vx
             self.y += self.vy
         elif self.alive == False:
             if frameCount%10 == 0:
