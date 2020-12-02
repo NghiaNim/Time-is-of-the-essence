@@ -20,10 +20,9 @@ class Game:
         self.g = g
 
         #Enemy Test
-        self.enemylist.append(TimeWraith(220, 700, 800, 200, 800))
+        self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
         #obstacle test self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.obstaclelist.append(Obstacle(500, 752, 24, 24, "block.png", 24, 24))
-        self.obstaclelist.append(Obstacle(500, 776, 24, 24, "block.png", 24, 24))
+        self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -349,14 +348,15 @@ class Enemy(Creation):
             if self.x+self.vx < self.xleft:
                 self.vx *= -1
                 self.direction = RIGHT
+                print("Debug")
             elif self.x+self.vx > self.xright:
                 self.vx *= -1
                 self.direction = LEFT
 
             # Check for obstacles
             for o in game.obstaclelist:
-                # Check if it passes from left to right:
-                if self.x + self.vx >= o.x and self.x + self.vx <= o.x + o.w:
+                # This will check whether the next "step" will be within the obstacle,
+                if (self.x + self.vx >= o.x and self.x + self.vx <= o.x + o.w) or (self.x + self.w + self.vx >= o.x and self.x+self.w + self.vx <= o.x + o.w) and ((self.y>=o.y and self.y<=o.y+o.h) or (self.y+self.h >= o.y and self.y+self.h <= o.y+o.h)):
                     self.vx *= -1
                     if self.direction == LEFT:
                         self.direction = RIGHT
@@ -574,6 +574,12 @@ class Obstacle(Creation):
         for p in game.hero_projectiles:
             if self.collision_rect(p):
                 p.destroy()
+
+# def collision_obstacle(self, target):
+#         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+#             return True
+#         else:
+#             return False
 
 
             
