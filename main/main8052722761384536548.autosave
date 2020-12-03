@@ -24,16 +24,13 @@ class Game:
         #obstacle test
         self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
-        #item test
-        self.itemlist.append(BuffItem(700, 500, self.g, 1))
-
         #random sprite for hero
         if hero == 'Jack':
-            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 'SteamMan_jump.png', 6, 10, 5)
+            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 10, 5)
         elif hero == 'Jill':
-            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 5)
+            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 20, 5)
         elif hero == 'John':
-            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 10, 5)
+            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 10, 5)
     
     
     def display(self):
@@ -126,18 +123,16 @@ class Creation:
 
 
 class Hero(Creation):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, time, dmg, speed):
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, time, dmg, speed):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False, 'E':False}
+        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False, 'P':False}
         self.standing_y = y
         self.standing_h = h
         self.direction = RIGHT
         self.img_idle = loadImage(path + "/images/" + img_name_idle)
         self.img_hurt = loadImage(path + '/images/' + img_name_hurt)
-        self.img_jump = loadImage(path + '/images/' + img_name_jump)
         self.idle_num_frames = idle_num_frames
         self.hurt_num_frames = hurt_num_frames
-        self.jump_num_frames = jump_num_frames
 
         self.time = time
 
@@ -147,8 +142,8 @@ class Hero(Creation):
 
         self.col_framestamp = frameCount
 
-        self.base_shootingspeed = 15
-
+        self.base_shootingspeed = 30
+        self.shootingspeed = 10 # Cooldown for shooting in frames
         self.shoot_framestamp = frameCount
         
         self.invincible = 0
@@ -157,11 +152,7 @@ class Hero(Creation):
         self.dmg = dmg
         self.base_dmg = dmg #default weapon damage
 
-        self.active_ability_time = 0
-        self.real_active_ability_cooldown = 0
 
-
-        
         self.bullet_img = 'bullet.png'
 
         self.base_speed = speed
@@ -194,9 +185,6 @@ class Hero(Creation):
         elif frameCount %60 == 0:
             self.active_shooting_speed -= 1
 
-        if frameCount %60 == 0 and self.real_active_ability_cooldown > 0:
-            self.real_active_ability_cooldown -= 1
-
         #the player get hits, he won't be able to move for 35 frames but will retain invincibility for 25 more frames
         if self.knockback == False or self.invincible < 25:
             if self.invincible == 24:
@@ -222,7 +210,7 @@ class Hero(Creation):
                 if self.key_handler[UP] == True and self.y+self.h == self.g:
                     self.vy = -10
 
-                if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
+q
                     self.special_ability()
 
                 if self.key_handler['Q'] == True:
@@ -248,10 +236,8 @@ class Hero(Creation):
         #Attack Handler
 
         
-        #frames of animation based on action
-        if frameCount%10 == 0 and self.vy != 0:
-            self.frame = (self.frame + 1) % self.jump_num_frames
-        elif frameCount%10 == 0 and self.vx == 0:
+        #animation based on action
+        if frameCount%10 == 0 and self.vx == 0:
             self.frame = (self.frame + 1) % self.idle_num_frames
         elif frameCount%10 == 0 and self.vx != 0 and self.vy == 0:
             self.frame = (self.frame + 1) % self.num_frames
@@ -314,11 +300,8 @@ class Hero(Creation):
         elif self.invincible > 0 and self.direction == LEFT and self.knockback == True:
             image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 2 * self.img_w - 18, 0, 1 * self.img_w, self.img_h)
 
-        #animation for jumping
-        elif self.vy != 0 and self.direction == RIGHT:
-            image(self.img_jump, self.x, self.y, self.img_w - 18, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) *self.img_w - 18, self.img_h)
-        elif self.vy != 0 and self.direction == LEFT:
-            image(self.img_jump, self.x, self.y, self.img_w - 18, self.img_h, (self.frame + 1) * self.img_w - 18, 0, self.frame * self.img_w, self.img_h)
+
+
 
         #4 frames of idle but currently only 1
         #Won't implement the rest if this is not a fitting sprite
@@ -333,8 +316,6 @@ class Hero(Creation):
         
         textSize(20)
         text('Remaining time: ' + str(self.time), 50, 30)
-        text('(E) Ability cooldown: ' + str(self.real_active_ability_cooldown), 300, 30)
-
 
     def attack(self):
         if self.direction == LEFT:
@@ -343,65 +324,53 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
-            if self.active_damage == 0:
-                self.bullet_img = 'bullet.png'
-            else:
-                self.bullet_img = 'bullet_up.png'
 
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
-
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.bullet_img, 16, 16, 5, 5*p_vx, -6, 150, False, self.dmg))
+            
     def invincible_buff(self, time):
         self.invincible = time*60
 
     def damage_buff(self, time):
         self.dmg = self.base_dmg * 2
-        self.active_damage += time
+        self.active_damage = time
 
     def shooting_speed_buff(self, time):
         self.shootingspeed = self.base_shootingspeed/2
-        self.active_shooting_speed += time
+        self.active_shooting_speed = time
 
     def speed_buff(self,time):
         self.speed = self.base_speed * 2
-        self.active_speed += time
+        self.active_speed = time
 
 
 class Jack(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
-        self.active_ability_cooldown = 30
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 100, dmg, speed)
         self.active_ability_time = 3
 
         
     def special_ability(self):
-        self.active_ability_cooldown 
         pass
     
 class Jill(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
-        self.active_ability_cooldown = 10
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 30, dmg, speed)
         self.active_ability_time = 3
 
     def special_ability(self):
         self.invincible_buff(self.active_ability_time)
         self.damage_buff(self.active_ability_time)
         self.shooting_speed_buff(self.active_ability_time)
-        self.speed_buff(self.active_ability_time)
-        
-        self.real_active_ability_cooldown = self.active_ability_cooldown 
 
         
         pass
     
 class John(Hero):
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, 120, dmg, speed)
         self.active_ability_time = 1
-        self.active_ability_cooldown = 40
         
     def special_ability(self):
-        self.active_ability_cooldown 
         pass
 
 class Enemy(Creation):
@@ -509,7 +478,6 @@ class Enemy(Creation):
 
             self.x += self.vx
             self.y += self.vy
-
         elif self.alive == False:
             if frameCount%10 == 0:
                 self.death_frame = self.death_frame + 1
@@ -700,17 +668,14 @@ class BuffItem(Item):
         elif effect == 4:
             self.item = 'Orange'
             
-        Item.__init__(self, x, y, 32, 32, g, self.item + ".png", 32, 32, 17, True)
+        Item.__init__(self, x, y, 32, 32, g, effect + ".png", 32, 32, 17, True)
 
     def update(self):
-        Creation.update(self)
 
         if self.collision_rect(game.hero) == True:
                     
-            #double damage and attack speed
+            #double damage
             if self.item == 'Apple':
-                game.hero.damage_buff(5)
-                game.hero.shooting_speed_buff(5)
                 pass
             
             #time freeze
@@ -726,7 +691,6 @@ class BuffItem(Item):
                 pass
         
             self.destroy()
-
 class Obstacle(Creation):
 
     def __init__(self, x, y, w, h, img_name, img_w, img_h):
@@ -807,8 +771,8 @@ def keyPressed():
         game.hero.key_handler[DOWN] = True 
     elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = True
-    elif key == 'E' or key == 'e':
-        game.hero.key_handler['E'] = True
+    elif key == 'P' or key == 'p':
+        game.hero.key_handler['P'] = True
 
 def keyReleased():
     if keyCode == LEFT:
@@ -822,7 +786,7 @@ def keyReleased():
     elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = False
     elif key == 'P' or key == 'p':
-        game.hero.key_handler['E'] = False
+        game.hero.key_handler['P'] = False
         
 def mousePressed():
     global gameScreen
