@@ -312,8 +312,8 @@ class Hero(Creation):
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
 
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, self.bullet_img, 16, 16, 5, 5*p_vx, -6, 150, False, self.dmg))
-
+            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.bullet_img, 16, 16, 5, 5*p_vx, -6, 150, False, self.dmg))
+            
     def invincible_buff(self, time):
         self.invincible = 10*60
 
