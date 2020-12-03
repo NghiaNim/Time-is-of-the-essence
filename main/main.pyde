@@ -43,8 +43,8 @@ class Game:
             p.display()
         for i in self.itemlist:
             i.display()
-        for o in self.obstaclelist:
-            o.display()
+        # for o in self.obstaclelist:
+        #     o.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
