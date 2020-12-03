@@ -43,8 +43,8 @@ class Game:
             p.display()
         for i in self.itemlist:
             i.display()
-        # for o in self.obstaclelist:
-        #     o.display()
+        for o in self.obstaclelist:
+            o.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -69,12 +69,13 @@ class Creation:
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
-        for o in game.obstaclelist:
-            if self.y + self.h <= o.y and ((self.x + self.w >= o.x and self.x + self.w <= o.x + o.w) or (self.x <= o.x + o.w and self.x >= o.x)):
-                self.g = o.y
-                break
-            else:
-                self.g = game.g
+        if len(game.obstaclelist) != 0:
+            for o in game.obstaclelist:
+                if self.y + self.h <= o.y and ((self.x + self.w >= o.x and self.x + self.w <= o.x + o.w) or (self.x <= o.x + o.w and self.x >= o.x)):
+                    self.g = o.y
+                    break
+                else:
+                    self.g = game.g
                 
     def update(self):
         self.gravity()
@@ -220,9 +221,12 @@ class Hero(Creation):
                 self.time -= projectile.dmg
                 self.invincible = 60
 
-        for o in game.obstaclelist:
-            if self.collision_future(o) == False:
-                self.x += self.vx
+        if len(game.obstaclelist) != 0:
+            for o in game.obstaclelist:
+                if self.collision_future(o) == False:
+                    self.x += self.vx
+        else:
+            self.x += self.vx
         self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
@@ -606,14 +610,6 @@ class Obstacle(Creation):
         for p in game.hero_projectiles:
             if self.collision_rect(p):
                 p.destroy()
-
-# def collision_obstacle(self, target):
-#         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
-#             return True
-#         else:
-#             return False
-
-
             
 def drawMenu():
     background(255, 255, 255)
