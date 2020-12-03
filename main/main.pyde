@@ -70,7 +70,7 @@ class Creation:
                 self.vy = self.g - (self.y + self.h)
 
         for o in game.obstaclelist:
-            if self.y + self.h <= o.y and self.x + self.w >= o.x and self.x - self.w <= o.x + o.w:
+            if self.y + self.h <= o.y and ((self.x + self.w >= o.x and self.x + self.w <= o.x + o.w) or (self.x <= o.x + o.w and self.x >= o.x)):
                 self.g = o.y
                 break
             else:
@@ -223,7 +223,7 @@ class Hero(Creation):
         for o in game.obstaclelist:
             if self.collision_future(o) == False:
                 self.x += self.vx
-                self.y += self.vy
+        self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
 
