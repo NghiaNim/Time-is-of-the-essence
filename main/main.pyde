@@ -15,10 +15,14 @@ class Game:
         self.enemy_projectiles = []
         self.hero_projectiles = []
         self.enemylist = []
+        self.itemlist = []
+        self.obstaclelist = []
         self.g = g
 
         #Enemy Test
-        self.enemylist.append(TimeWraith(300, 700, 800, 200, 800))
+        self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
+        #obstacle test
+        self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -37,6 +41,10 @@ class Game:
             p.display()
         for p in self.hero_projectiles:
             p.display()
+        for i in self.itemlist:
+            i.display()
+        # for o in self.obstaclelist:
+        #     o.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -60,6 +68,13 @@ class Creation:
             self.vy += 0.3
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
+
+        for o in game.obstaclelist:
+            if self.y + self.h <= o.y and self.x + self.w >= o.x and self.x - self.w <= o.x + o.w:
+                self.g = o.y
+                break
+            else:
+                self.g = game.g
                 
     def update(self):
         self.gravity()
@@ -74,6 +89,12 @@ class Creation:
     # Simple collision detection, doesn't check for side (needed for enemies class)
     def collision_rect(self, target):
         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+            return True
+        else:
+            return False
+
+    def collision_future(self, target):
+        if (self.x + self.vx < target.x + target.w) and (self.x + self.w + self.vx > target.x) and (self.y + self.vy < target.y + target.h) and (self.y + self.vy + self.h > target.y):
             return True
         else:
             return False
@@ -115,6 +136,7 @@ class Hero(Creation):
         self.time = time
         
         self.collission_countdown = 30 # How for how many frames should be hero invincible after detecting collsion?
+
         self.col_framestamp = frameCount
 
         self.base_shootingspeed = 10
@@ -236,8 +258,10 @@ class Hero(Creation):
                 self.time -= projectile.dmg
                 self.invincible = 60
 
-        self.x += self.vx
-        self.y += self.vy
+        for o in game.obstaclelist:
+            if self.collision_future(o) == False:
+                self.x += self.vx
+                self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
 
@@ -287,6 +311,7 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
+
             game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.g, self.bullet_img, 16, 16, 5, 5*p_vx, -6, 150, False, self.dmg))
 
     def invincible_buff(self, time):
@@ -303,6 +328,7 @@ class Hero(Creation):
     def speed_buff(self,time):
         self.shootingspeed /= 2
         self.active_speed = time
+
 
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, dmg, speed):
@@ -333,7 +359,7 @@ class John(Hero):
 
 class Enemy(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, follow=False, p_gravity=False, followdistance=0):
+    def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, droprate, follow=False, p_gravity=False, followdistance=0):
 
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
 
@@ -359,13 +385,14 @@ class Enemy(Creation):
         self.projectile_speed = 4 # VX attribute of the casted projectile
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.dmg_projectile = dmg_projectile # Projectile dmg
+        self.droprate = droprate
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
         self.attack_count = attack_count
+        self.vx = vx
         if self.direction == LEFT:
             self.vx *= -1
-        self.vx = vx
         self.xleft = xl #left X boundary
         self.xright = xr # right x boundary
         self.tmp_vx = 0
@@ -388,9 +415,11 @@ class Enemy(Creation):
                     self.vx = self.tmp_vx
                     self.idle = False
 
+            # If the enemy should follow the hero this will change its direction
             if self.follow_bol == True:
                 self.follow()
 
+            # Checks for the "boundaries"
             if self.x+self.vx < self.xleft:
                 self.vx *= -1
                 self.direction = RIGHT
@@ -398,9 +427,23 @@ class Enemy(Creation):
                 self.vx *= -1
                 self.direction = LEFT
 
+            # Check for obstacles
+            for o in game.obstaclelist:
+                # This will check whether the next "step" will be within the obstacle,
+                if (self.x + self.vx >= o.x and self.x + self.vx <= o.x + o.w) or (self.x + self.w + self.vx >= o.x and self.x+self.w + self.vx <= o.x + o.w) and ((self.y>=o.y and self.y<=o.y+o.h) or (self.y+self.h >= o.y and self.y+self.h <= o.y+o.h)):
+                    self.vx *= -1
+                    if self.direction == LEFT:
+                        self.direction = RIGHT
+                    else:
+                        self.direction = LEFT
+
+            # Collision with projectiles
             for p in game.hero_projectiles:
-                if self.collision_rect(p) == True:
-                    self.hp -= p.dmg
+                if self.collision_rect_left(p) == True:
+                    self.damage(p.dmg, LEFT)
+                    p.destroy()
+                elif self.collision_rect_right(p) == True:
+                    self.damage(p.dmg, RIGHT)
                     p.destroy()
 
             #slow down animation
@@ -417,8 +460,7 @@ class Enemy(Creation):
             if self.hp <= 0:
                 self.death()
 
-            if self.alive == True and self.x + self.vx > self.xleft and self.x + self.vx < self.xright:
-                self.x += self.vx
+            self.x += self.vx
             self.y += self.vy
         elif self.alive == False:
             if frameCount%10 == 0:
@@ -428,6 +470,7 @@ class Enemy(Creation):
 
     def display(self):
         self.update() 
+        rect(self.x, self.y, self.w, self.h)
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -447,9 +490,9 @@ class Enemy(Creation):
     # Here we will be able to define the specifics of attacks 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
+            game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(Projectile(self.x+self.img_w, self.y+25, 15, 15, self.g, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
+            game.enemy_projectiles.append(Projectile(self.x+self.w, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
     
     def follow(self):
 
@@ -474,23 +517,50 @@ class Enemy(Creation):
     def death(self):
         self.alive = False
 
+    def damage(self, dmg, dir): 
+        self.hp -= dmg
+        self.vy -= 3
+
+
     def destroy(self):
+        rand_int = random.randint(0,100)
+        if rand_int < self.droprate:
+            game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
         game.enemylist.remove(self)
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 64, 66, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 66, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, True, False, 200)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, 100, True, False, 200)
 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, self.g, -self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(ClockProjectile(self.x+self.img_w, self.y+25, self.g, self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+25, self.projectile_speed, self.dmg_projectile))
+
+    # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
+    def display(self):
+        self.update()
+        rect(self.x, self.y, self.w, self.h) 
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-14, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-14, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-14, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-14, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
 class Projectile(Creation):
 
-    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
-        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+    def __init__(self, x, y, w, h, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
+        Creation.__init__(self, x, y, w, h, game.g, img_name, img_w, img_h, num_frames)
         self.vx = vx
         self.vy = vy
         self.framespan = framespan #How many frames should the projectile exist
@@ -502,6 +572,16 @@ class Projectile(Creation):
             self.direction = RIGHT
         else:
             self.direction = LEFT 
+
+    # Projectiles will have stripped gravity as we don't want their ground level to change
+    def gravity(self):
+
+        if self.y + self.h >= self.g:
+            self.vy = 0
+        else:
+            self.vy += 0.3
+            if self.y + self.h + self.vy > self.g:
+                self.vy = self.g - (self.y + self.h)
 
     def update(self):
 
@@ -534,8 +614,65 @@ class Projectile(Creation):
                 self.vy = self.g - (self.y + self.h)
 
 class ClockProjectile(Projectile):
-    def __init__(self, x, y, g, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, g, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+    def __init__(self, x, y, projectile_speed, dmg):
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+
+class Item(Creation):
+
+    def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, autopick):
+        Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
+        self.autopick = autopick
+        self.direction = RIGHT #This should be an attribute whether the item is going to be autopicked, but we could theoretically remove it whatsoever
+
+    def destroy(self):
+        game.itemlist.remove(self)
+
+class TimeItem(Item):
+
+    def __init__(self, x, y, g, time):
+        Item.__init__(self, x, y, 32, 32, g, "clockitem.png", 32, 32, 6, True)
+        self.time = time
+
+
+    def update(self):
+        Creation.update(self)
+
+        if self.collision_rect(game.hero) == True:
+            game.hero.time += self.time
+            self.destroy()
+
+class Obstacle(Creation):
+
+    def __init__(self, x, y, w, h, img_name, img_w, img_h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.vx = 0
+        self.vy = 0
+        self.img = loadImage(path + "/images/" + img_name)
+        self.img_w = img_w
+        self.img_h = img_h
+        self.num_frames = 1
+        self.frame= 0
+        self.direction = RIGHT
+
+    def update(self):
+        
+        # Destroy all projectiles that hit the obstacle
+        for p in game.enemy_projectiles:
+            if self.collision_rect(p):
+                p.destroy()
+        for p in game.hero_projectiles:
+            if self.collision_rect(p):
+                p.destroy()
+
+# def collision_obstacle(self, target):
+#         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+#             return True
+#         else:
+#             return False
+
 
             
 def drawMenu():
