@@ -21,6 +21,7 @@ class Game:
 
         #Enemy Test
         self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
+        self.enemylist.append(Worm(600, 700, 800, 550, 1000))
         #obstacle test
         self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
@@ -586,7 +587,7 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5, 3, 100, True, False, 200)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5.5, 3, 50, True, False, 100)
 
     def attack(self):
         if self.direction == LEFT:
@@ -612,6 +613,12 @@ class TimeWraith(Enemy):
                 image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
             if self.direction == LEFT:
                 image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+class Worm(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 4.5, 0, 12, 1, 50, True, False, 350)
+        self.projectile_bol = False # Does the enemy cast projectiles?
+
 
 class Projectile(Creation):
 
