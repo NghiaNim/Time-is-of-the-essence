@@ -330,6 +330,14 @@ class Hero(Creation):
             image(self.img, self.x, self.y, self.img_w - 18, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w - 18, self.img_h)
         elif self.direction == LEFT:
             image(self.img, self.x, self.y, self.img_w - 18, self.img_h, (self.frame + 1) * self.img_w - 18, 0, self.frame * self.img_w, self.img_h)
+
+        #show invincible effect
+        if self.invincible > 0:
+            noFill()
+            strokeWeight(1.5)
+            stroke(255,255,0)
+
+            ellipse(self.x + 15, self.y - 15 , 20, 8)
         
         textSize(20)
         text('Remaining time: ' + str(self.time), 50, 30)
