@@ -1,6 +1,8 @@
 #An empty line is used to separate levels
 TimeWraith,200,700,800,200,800
 Worm,600,700,800,550,1000
+#for buff items ignore the 3rd argument
+BuffItem,700,500,1
 
 TimeWraith,800,700,800,200,800
 Worm,700,700,800,550,1000
