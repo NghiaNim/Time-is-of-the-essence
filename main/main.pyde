@@ -369,11 +369,12 @@ class Hero(Creation):
                 self.invincible = 60
                 self.knockback = True
 
+        future_collision = False
         if len(game.obstaclelist) != 0:
             for o in game.obstaclelist:
-                if self.collision_future(o) == False:
-                    self.x += self.vx
-        else:
+                if self.collision_future(o) == True:
+                    future_collision = True
+        if future_collision == False:
             self.x += self.vx
         self.y += self.vy
         self.standing_y += self.vy
