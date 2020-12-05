@@ -585,35 +585,41 @@ class Enemy(Creation):
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.dmg_projectile = dmg_projectile # Projectile dmg
         self.droprate = droprate
+        self.attack_count = attack_count
+        self.attacked_cnt = 0 #records the series of attacks
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
-        self.attack_count = attack_count
+        
         self.vx = vx
         if self.direction == LEFT:
             self.vx *= -1
         self.xleft = xl #left X boundary
         self.xright = xr # right x boundary
         self.tmp_vx = 0
+        
 
     def update(self):
         if self.alive == True:
             self.gravity()
 
-            # Idle and attack loop (enemy will stop to attack)
+
+            # Idle and attack loop (enemy will stop walking so he can attack)
             if frameCount - self.framestart > self.attackspeed:
                 if self.idle == False:
                     self.tmp_vx = self.vx
                     self.vx = 0
                     self.idle = True
-                if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
                     if self.projectile_bol == True: #Does the enemy shoot projectiles?
                         self.attack()
-                if self.idle_count-1 == self.num_idle_frames:
+                        self.attacked_cnt += 1       
+                if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
                     self.framestart = frameCount
                     self.vx = self.tmp_vx
                     self.idle = False
-
+                    self.attacked_cnt = 0
+            
             # If the enemy should follow the hero this will change its direction
             if self.follow_bol == True:
                 self.follow()
@@ -651,7 +657,6 @@ class Enemy(Creation):
             # slow down idle frames
             if self.vx == 0 and frameCount%10 == 0:
                 self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
-                self.idle_count += 1
             elif self.vx != 0:
                 self.idle_frame = 0
                 self.idle_count = 0
@@ -670,7 +675,7 @@ class Enemy(Creation):
 
     def display(self):
         self.update() 
-        rect(self.x, self.y, self.w, self.h)
+        #rect(self.x, self.y, self.w, self.h)
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -730,7 +735,7 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5.5, 3, 50, True, False, 100)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 100, 3, 10, 5.5, 2, 50, True, False, 100)
 
     def attack(self):
         if self.direction == LEFT:
@@ -741,7 +746,6 @@ class TimeWraith(Enemy):
     # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
     def display(self):
         self.update()
-        rect(self.x, self.y, self.w, self.h) 
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x-14, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -764,12 +768,11 @@ class Worm(Enemy):
 
 class TimeWizard(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 180, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
+        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
         self.projectile_speed = 7 # VX attribute of the casted projectile
 
     def display(self):
         self.update()
-        rect(self.x, self.y, self.w, self.h) 
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
