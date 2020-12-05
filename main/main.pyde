@@ -39,6 +39,11 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
 
+        self.backgrounds = []
+        self.backgrounds.append(loadImage(path + "/images/Background_layers/Layer_0010.png"))
+        for i in range(9, 0, -1):
+            self.backgrounds.append(loadImage(path + "/images/Background_layers/Layer_000" + str(i) + ".png"))
+
             
 
         #Enemy Test
@@ -72,6 +77,9 @@ class Game:
 
     
     def display(self):
+        for i in self.backgrounds:
+            image(i, 0, 0, WIDTH, HEIGHT)
+
         self.update()
         for e in self.enemylist:
             e.display()
