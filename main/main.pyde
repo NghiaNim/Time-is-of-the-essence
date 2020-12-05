@@ -19,7 +19,7 @@ class Game:
         self.itemlist = []
         self.obstaclelist = []
         self.g = g
-        self.clear = False
+        self.next_level = False
         
         for line in level:
             if line == '\n':
@@ -35,8 +35,10 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
 
-            if line == '\n':
-                break
+            elif line[0] == 'BuffItem':
+                line = list(map(int, line[1:]))
+                self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
+
             
 
         #Enemy Test
@@ -46,13 +48,13 @@ class Game:
         self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
         #item test
-        self.itemlist.append(BuffItem(700, 500, self.g, 1))
+        # self.itemlist.append(BuffItem(700, 500, self.g, 1))
 
         #random sprite for hero
         if hero == 'Jack':
             self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 'SteamMan_jump.png', 6, 10, 4)
         elif hero == 'Jill':
-            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 7)
+            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 6)
         elif hero == 'John':
             self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 10, 5)
     
@@ -85,8 +87,6 @@ class Game:
         for o in self.obstaclelist:
             o.display()
 
-    def next_level(self):
-        pass
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -260,7 +260,7 @@ class Hero(Creation):
                     self.vx = 0
         
                 if self.key_handler[UP] == True and self.y+self.h == self.g:
-                    self.vy = -10
+                    self.vy = -7
 
                 if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
                     self.special_ability()
@@ -298,8 +298,12 @@ class Hero(Creation):
 
         #check for hit
         for enemy in game.enemylist:
-            if isinstance(enemy, Portal):
-                game.next_level()
+            #check for endgame
+            if isinstance(enemy, Portal) and (self.collision_rect_right(enemy) or self.collision_rect_left(enemy)) and enemy.frame > 40 :
+                game.next_level = True
+
+            elif isinstance(enemy, Portal):
+                continue
 
             elif self.collision_rect_right(enemy) and self.invincible <= 0:
                 self.time -= enemy.dmg
@@ -414,7 +418,7 @@ class Hero(Creation):
         self.active_shooting_speed += time
 
     def speed_buff(self,time):
-        self.speed = self.base_speed * 2
+        self.speed = self.base_speed * 1.5
         self.active_speed += time
 
 
@@ -465,6 +469,7 @@ class John(Hero):
         stomp = self.dmg*3
         for enemy in game.enemylist:
             enemy.damage(stomp, LEFT)
+            enemy.vy -= 3
             enemy.y += enemy.vy
             self.time -= self.dmg//2
             pass
@@ -837,12 +842,14 @@ class Portal(Creation):
         self.img_w = 320
         self.img_h = 320
         self.frame = 0
+        self.img = loadImage(path + "/images/portal_sprites/sprite_0" + str(self.frame) + '.png')
+
 
     def update(self):
-            if self.frame < 10:
+            if self.frame < 10 and frameCount % 2 == 0:
                 self.img = loadImage(path + "/images/portal_sprites/sprite_0" + str(self.frame) + '.png')
                 self.frame += 1
-            elif self.frame <= 40:
+            elif self.frame <= 40 and frameCount % 2 == 0:
                 self.img = loadImage(path + "/images/portal_sprites/sprite_" + str(self.frame) + '.png')
                 self.frame += 1
 
@@ -887,6 +894,12 @@ def drawGame():
     if game.hero.time < 0:
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)
+
+    if game.next_level == True:
+        global real_time
+        real_time = game.hero.time
+        game = Game(WIDTH, HEIGHT, 800, hero) 
+        game.hero.time = real_time
         
 def setup():
     size(WIDTH, HEIGHT)
