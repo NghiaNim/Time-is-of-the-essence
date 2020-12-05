@@ -38,7 +38,9 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
 
-            
+            elif line[0] == 'Wall':
+                line = list(map(int, line[1:]))
+                self.obstaclelist.append(Obstacle(line[0], line[1], line[2], line[3], 'doubleblock.png', line[2], line[3]))
 
             elif line[0] == 'end':
                 global gameScreen
@@ -50,7 +52,7 @@ class Game:
         # self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
         # self.enemylist.append(Worm(600, 700, 800, 550, 1000))
         #obstacle test
-        self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
+        # self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
         #item test
         # self.itemlist.append(BuffItem(700, 500, self.g, 1))
@@ -297,8 +299,8 @@ class Hero(Creation):
                 if self.key_handler[UP] == True and self.y+self.h == self.g:
                     self.vy = -7
 
-                if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
-                    self.special_ability()
+            if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
+                self.special_ability()
 
             if self.key_handler['Q'] == True:
                 self.attack()
