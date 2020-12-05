@@ -38,6 +38,10 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
 
+            elif line[0] == 'TimeWizard':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(TimeWizard(line[0],line[1],line[2],line[3],line[4]))
+
             elif line[0] == 'BuffItem':
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
@@ -352,13 +356,13 @@ class Hero(Creation):
             elif isinstance(enemy, Portal):
                 continue
 
-            elif self.collision_rect_right(enemy) and self.invincible <= 0:
+            elif self.collision_rect_right(enemy) and self.invincible <= 0 and enemy.alive == True:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
 
-            elif self.collision_rect_left(enemy) and self.invincible <= 0:
+            elif self.collision_rect_left(enemy) and self.invincible <= 0 and enemy.alive == True:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.knockback = True
@@ -758,6 +762,33 @@ class Worm(Enemy):
         Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 3, 0, 12, 1, 50, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
+class TimeWizard(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 180, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
+        self.projectile_speed = 7 # VX attribute of the casted projectile
+
+    def display(self):
+        self.update()
+        rect(self.x, self.y, self.w, self.h) 
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+    def attack(self):
+            game.enemy_projectiles.append(SmallFireball(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile, self.p_gravity))
+            game.enemy_projectiles.append(SmallFireball(self.x+self.w, self.y+5, self.projectile_speed, self.dmg_projectile, self.p_gravity))
+
 
 class Projectile(Creation):
 
@@ -781,7 +812,7 @@ class Projectile(Creation):
         if self.y + self.h >= self.g:
             self.vy = 0
         else:
-            self.vy += 0.3
+            self.vy += 0.1
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
@@ -809,7 +840,11 @@ class Projectile(Creation):
 
 class ClockProjectile(Projectile):
     def __init__(self, x, y, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -4, 150, True, dmg)
+
+class SmallFireball(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, -7, 150, gravity, dmg)
 
 class Item(Creation):
 
