@@ -1,4 +1,4 @@
-add_library('controlP5')
+qadd_library('controlP5')
 add_library('minim')
 
 import random, os
@@ -7,7 +7,6 @@ player = Minim(this)
 WIDTH = 1920
 HEIGHT = 1080
 gameScreen = 0
-level = open('level_design.txt','r')
 
 class Game:
     def __init__(self, w, h, g, hero):
@@ -20,28 +19,10 @@ class Game:
         self.obstaclelist = []
         self.g = g
         self.clear = False
-        
-        for line in level:
-            if line == '\n':
-                break
-
-            line = line.strip().split(',')
-            if line[0] == 'TimeWraith':
-                line = list(map(int, line[1:]))
-                self.enemylist.append(TimeWraith(line[0],line[1],line[2],line[3],line[4]))
-
-
-            elif line[0] == 'Worm':
-                line = list(map(int, line[1:]))
-                self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
-
-            if line == '\n':
-                break
-            
 
         #Enemy Test
-        # self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
-        # self.enemylist.append(Worm(600, 700, 800, 550, 1000))
+        self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
+        self.enemylist.append(Worm(600, 700, 800, 550, 1000))
         #obstacle test
         self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
 
@@ -63,7 +44,7 @@ class Game:
             random_cor = random.randint(120,1800)
 
             #check if portal will spawn in wall
-            for obstacle in self.obstaclelist:
+            for obstacle in obstaclelist:
                 while random_cor < obstacle.x < random_cor + 120 or random_cor < obstacle.x + obstacle.w < random_cor + 120:
                     random_cor = random.randint(120, 1800)
             self.enemylist.append(Portal(random_cor, self.g - 120, 120, 120))
@@ -423,7 +404,7 @@ class Jack(Hero):
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 20
+
         
     def special_ability(self):
         #blank 
@@ -439,7 +420,6 @@ class Jill(Hero):
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 15
 
     def special_ability(self):
         #beserk
@@ -457,18 +437,9 @@ class John(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
         self.active_ability_time = 1
-        self.active_ability_cooldown = 30
-        self.base_shootingspeed = 22
+        self.active_ability_cooldown = 40
         
     def special_ability(self):
-        #tank stomp
-        stomp = self.dmg*3
-        for enemy in game.enemylist:
-            enemy.damage(stomp, LEFT)
-            enemy.y += enemy.vy
-            self.time -= self.dmg//2
-            pass
-
         
         self.real_active_ability_cooldown = self.active_ability_cooldown 
         pass
@@ -676,7 +647,7 @@ class TimeWraith(Enemy):
 
 class Worm(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 3, 0, 12, 1, 50, True, False, 350)
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 4.5, 0, 12, 1, 50, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
 
@@ -881,11 +852,10 @@ def drawMenu():
     pass
 
 def drawGame():
-    global game, level
+    global game
     background(255, 255, 255)
     game.display()
     if game.hero.time < 0:
-        level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)
         
 def setup():

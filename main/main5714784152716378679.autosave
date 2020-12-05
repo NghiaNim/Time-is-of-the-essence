@@ -24,7 +24,7 @@ class Game:
         for line in level:
             if line == '\n':
                 break
-
+            
             line = line.strip().split(',')
             if line[0] == 'TimeWraith':
                 line = list(map(int, line[1:]))
@@ -881,11 +881,10 @@ def drawMenu():
     pass
 
 def drawGame():
-    global game, level
+    global game
     background(255, 255, 255)
     game.display()
     if game.hero.time < 0:
-        level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)
         
 def setup():
