@@ -7,7 +7,6 @@ player = Minim(this)
 WIDTH = 1920
 HEIGHT = 1080
 gameScreen = 0
-level = open('level_design.txt','r')
 
 class Game:
     def __init__(self, w, h, g, hero):
@@ -41,6 +40,12 @@ class Game:
 
             
 
+            elif line[0] == 'end':
+                global gameScreen
+                gameScreen += 1
+
+            
+
         #Enemy Test
         # self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
         # self.enemylist.append(Worm(600, 700, 800, 550, 1000))
@@ -52,11 +57,11 @@ class Game:
 
         #random sprite for hero
         if hero == 'Jack':
-            self.hero = Jack(100, 100, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 'SteamMan_jump.png', 6, 10, 4)
+            self.hero = Jack(100, 752, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 'SteamMan_jump.png', 6, 10, 4)
         elif hero == 'Jill':
-            self.hero = Jill(100, 100, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 6)
+            self.hero = Jill(100, 752, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 6)
         elif hero == 'John':
-            self.hero = John(100, 100, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 10, 5)
+            self.hero = John(100, 752, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 10, 5)
     
     def update(self):
         
@@ -73,6 +78,9 @@ class Game:
     
     def display(self):
         self.update()
+        fill(0,0,0)
+        stroke(0,0,0)
+        rect(0,self.g,WIDTH,HEIGHT)
         for e in self.enemylist:
             e.display()
 
@@ -86,6 +94,8 @@ class Game:
             i.display()
         for o in self.obstaclelist:
             o.display()
+
+
 
         
 class Creation:
@@ -179,7 +189,15 @@ class Hero(Creation):
         self.hurt_num_frames = hurt_num_frames
         self.jump_num_frames = jump_num_frames
 
+        self.autofire = False
+        self.autofiretime = 0
+        self.charges = self.base_charges
+
+        self.reloadtime = 0
+
         self.time = time
+
+        self.buffed_time = 0
 
         self.knockback = False
         
@@ -212,6 +230,23 @@ class Hero(Creation):
         self.active_shooting_speed = 0 #for shooting speed buff
 
     def update(self):
+        if self.autofire == True and frameCount%60 == 0:
+            self.autofiretime -= 1
+            if self.autofiretime == 0:
+                self.autofire = False
+
+        else:
+            if self.charges == 0:
+                self.charges -= 1
+                self.reloadtime = 2*60
+
+            if self.reloadtime > 0:
+                self.reloadtime -= 1
+
+                if self.reloadtime == 0:
+                    self.charges = self.base_charges
+
+
         self.gravity()
         if frameCount % 60 == 0:
             self.time -= 1
@@ -265,8 +300,10 @@ class Hero(Creation):
                 if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
                     self.special_ability()
 
-                if self.key_handler['Q'] == True:
-                    self.attack()
+            if self.key_handler['Q'] == True:
+                self.attack()
+            self.key_handler['Q'] = False
+            
 
 
         
@@ -341,7 +378,6 @@ class Hero(Creation):
         self.invincible -= 1
 
 
-        
     def display(self):
         
         #rectangle to show hitbox
@@ -391,6 +427,21 @@ class Hero(Creation):
         text('Remaining time: ' + str(self.time), 50, 30)
         text('(E) Ability cooldown: ' + str(self.real_active_ability_cooldown), 300, 30)
 
+        if self.reloadtime != 0:
+            fill(255,255,255)
+            text('Recharging...', 100, 900)
+
+        if self.autofire == True:
+            fill(0,255,0)
+            text('Rapid-fire mode', 100, 940)
+
+        if game.hero.buffed_time > 0:
+            fill(0,255,0)
+            text('DAMAGE UP!', 100, 920)
+            if frameCount % 60 == 0:
+                game.hero.buffed_time -= 1
+
+
 
     def attack(self):
         if self.direction == LEFT:
@@ -399,12 +450,17 @@ class Hero(Creation):
             p_vx = 1
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
+            if not self.autofire:
+                self.charges -= 1
             if self.active_damage == 0:
                 self.bullet_img = 'bullet.png'
             else:
                 self.bullet_img = 'bullet_up.png'
 
-            game.hero_projectiles.append(Projectile(self.x, self.y+20, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
+            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
+
+
+
 
     def invincible_buff(self, time):
         self.invincible = time*60
@@ -424,10 +480,12 @@ class Hero(Creation):
 
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
+        self.base_charges = 8
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
         self.base_shootingspeed = 20
+
         
     def special_ability(self):
         #blank 
@@ -440,10 +498,12 @@ class Jack(Hero):
     
 class Jill(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
+        self.base_charges = 10
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
         self.base_shootingspeed = 15
+
 
     def special_ability(self):
         #beserk
@@ -459,10 +519,13 @@ class Jill(Hero):
     
 class John(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
+        self.base_charges = 6
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
         self.active_ability_time = 1
         self.active_ability_cooldown = 30
         self.base_shootingspeed = 22
+
+
         
     def special_ability(self):
         #tank stomp
@@ -656,9 +719,9 @@ class TimeWraith(Enemy):
 
     def attack(self):
         if self.direction == LEFT:
-            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+25, -self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
-            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+25, self.projectile_speed, self.dmg_projectile))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y+5, self.projectile_speed, self.dmg_projectile))
 
     # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
     def display(self):
@@ -733,14 +796,6 @@ class Projectile(Creation):
         elif self in game.hero_projectiles:
             game.hero_projectiles.remove(self)
 
-    def gravity(self):
-        if self.y + self.h >= self.g:
-            self.vy = 0
-        else:
-            self.vy += 0.15
-            if self.y + self.h + self.vy > self.g:
-                self.vy = self.g - (self.y + self.h)
-
 class ClockProjectile(Projectile):
     def __init__(self, x, y, projectile_speed, dmg):
         Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
@@ -791,10 +846,13 @@ class BuffItem(Item):
             if self.item == 'Apple':
                 game.hero.damage_buff(5)
                 game.hero.shooting_speed_buff(5)
+                game.hero.buffed_time = 5
                 pass
             
             #time freeze
             elif self.item == 'Bananas':
+                game.hero.autofire = True
+                game.hero.autofiretime = 10 
                 pass 
                     
             #insta kill
@@ -900,6 +958,16 @@ def drawGame():
         real_time = game.hero.time
         game = Game(WIDTH, HEIGHT, 800, hero) 
         game.hero.time = real_time
+
+def drawEnd():
+    background(255, 255, 255)
+    stroke(0,0,0)
+    fill(0)
+    textSize(50)
+    text('You have successfully destroyed time', 500, 200)
+    text('Enjoy your eternal meaningless existence', 460, 260)
+    textSize(20)
+    text('Or press R to go back to character select', 750, 300)
         
 def setup():
     size(WIDTH, HEIGHT)
@@ -907,11 +975,14 @@ def setup():
 def draw():
     if gameScreen == 0:
         drawMenu()
-    else:
+    elif gameScreen == 1:
         drawGame()
+    elif gameScreen == 2:
+        drawEnd()
     
 
 def keyPressed():
+    global gameScreen
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = True
     elif keyCode == RIGHT:
@@ -920,11 +991,16 @@ def keyPressed():
         game.hero.key_handler[UP] = True
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = True 
-    elif key == 'Q' or key == 'q':
+    elif (key == 'Q' or key == 'q') and game.hero.autofire:
         game.hero.key_handler['Q'] = True
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = True
+    if gameScreen == 2 and (key == 'R' or key == 'r'):
+        gameScreen = 0
 
+
+
+        
 def keyReleased():
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = False
@@ -934,28 +1010,29 @@ def keyReleased():
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
-    elif key == 'Q' or key == 'q':
-        game.hero.key_handler['Q'] = False
+    elif (key == 'Q' or key == 'q') and game.hero.reloadtime == 0:
+        game.hero.key_handler['Q'] = True
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = False
         
 def mousePressed():
-    global gameScreen
-    global game
-    global hero
+    global gameScreen,game,hero,level
     #Choose Jack
     if gameScreen == 0 and 100<=mouseX<=400 and 200<=mouseY<=300:
         hero = 'Jack'
+        level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)
         gameScreen = 1
     #Choose Jill
     if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
         hero = 'Jill'
+        level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)
         gameScreen = 1
     #Choose John
     if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
         hero = 'John'
+        level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, 800, hero)        
         gameScreen = 1
         
