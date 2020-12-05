@@ -1,9 +1,13 @@
 #An empty line is used to separate levels
+#possible tutorial here
+
+#parameters: x, y, g, x_left, x_right
 TimeWraith,200,700,800,200,800
 Worm,600,700,800,550,1000
-#for buff items ignore the 3rd argument
+#parameters:x,y,type
 BuffItem,700,500,1
 BuffItem,900,200,2
+#parameters: x,y,w,h
 Wall,550,752,24,48
 Wall,800,752,24,48
 

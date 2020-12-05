@@ -69,7 +69,7 @@ class Game:
         
         if self.enemylist == []:
             #random portal spawn
-            random_cor = random.randint(120,1800)
+            random_cor = random.randint(500,1800)
 
             #check if portal will spawn in wall
             for obstacle in self.obstaclelist:
