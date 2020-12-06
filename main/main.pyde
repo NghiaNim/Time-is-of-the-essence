@@ -223,7 +223,8 @@ class Hero(Creation):
 
         self.col_framestamp = frameCount
 
-        self.base_shootingspeed = 15
+        self.base_shootingspeed = 0
+        self.shootingspeed = 0
 
         self.shoot_framestamp = frameCount
         
@@ -461,20 +462,21 @@ class Hero(Creation):
 
 
     def attack(self):
+
         if self.direction == LEFT:
             p_vx = -1
         elif self.direction == RIGHT:
             p_vx = 1
-        if frameCount - self.shoot_framestamp > self.shootingspeed:
-            self.shoot_framestamp = frameCount
-            if not self.autofire:
-                self.charges -= 1
-            if self.active_damage == 0:
-                self.bullet_img = 'bullet.png'
-            else:
-                self.bullet_img = 'bullet_up.png'
+            
+        self.shoot_framestamp = frameCount
+        if not self.autofire:
+            self.charges -= 1
+        if self.active_damage == 0:
+            self.bullet_img = 'bullet.png'
+        else:
+            self.bullet_img = 'bullet_up.png'
 
-            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
+        game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
 
 
 
@@ -1099,7 +1101,7 @@ def keyReleased():
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
-    elif (key == 'Q' or key == 'q'):
+    elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = False
         if game.hero.reloadtime == 0:
             game.hero.attack()
