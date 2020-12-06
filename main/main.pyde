@@ -46,6 +46,10 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Bat(line[0],line[1],line[2],line[3],line[4]))
 
+            elif line[0] == 'Boss':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(Reaper(line[0],line[1],line[2],line[3],line[4]))
+
             elif line[0] == 'BuffItem':
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
@@ -760,7 +764,11 @@ class Enemy(Creation):
     def destroy(self):
         rand_int = random.randint(0,100)
         if rand_int < self.droprate:
-            game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
+            rand_int2 = random.choice([0,1])
+            if rand_int2 == 0:
+                game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
+            elif rand_int2 == 1:
+                game.itemlist.append(BuffItem(self.x, self.y, self.g))
         game.enemylist.remove(self)
 
 class TimeWraith(Enemy):
@@ -839,6 +847,56 @@ class Bat(Enemy):
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
+class Reaper(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 100, 3, 10, 5.5, 1, 50, False, False, 100)
+        self.attackmode = 0
+        self.barrage_cnt = 13
+        self.sidebarrage_cnt = 40
+
+    def display(self):
+        self.update()
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-50, self.y-65, self.img_w*2, self.img_h*2, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-50, self.y-65, self.img_w*2, self.img_h*2, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+    def attack(self):
+        if self.attackmode == 0:
+            for n in range(self.barrage_cnt):
+                game.enemy_projectiles.append(BigClock((1920/self.barrage_cnt*n)-64, random.randint(0,200), 0, self.dmg_projectile, True))
+        elif self.attackmode == 1:
+            for n in range(self.sidebarrage_cnt):
+                x = random.choice([0, 1920])
+                if x == 0:
+                    p_dir = 1
+                else:
+                    p_dir = -1
+                game.enemy_projectiles.append(MiniFireball(x, random.randint(0,900), self.projectile_speed*p_dir, self.dmg_projectile, False))
+        elif self.attackmode == 2:
+            random = random.choice([1,2,3,4])
+            x = random.choice([300, 1600])
+            y = random.choice([300, 600, 700, 750, 800])
+            if random == 1:
+                game.enemylist.append(Bat(x, y, y, 200, 1600))
+            elif random == 2:
+                game.enemylist.append(TimeWraith(x, y, game.g, 200, 1600))
+            elif random == 3:
+                game.enemylist.append(TimeWizard(x, y, game.g, 200, 1600))
+            elif random == 4:
+                game.enemylist.append(Worm(x, y, game.g, 200, 1600))
+        self.attackmode = (self.attackmode+1)%3
+
 
 class Projectile(Creation):
 
@@ -900,9 +958,17 @@ class SmallFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
         Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, 0, 150, gravity, dmg)
 
+class MiniFireball(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 19, 16, "minifireball.png", 19, 16, 3, projectile_speed, 0, 300, gravity, dmg)
+
 class BatBall(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
         Projectile.__init__(self, x, y, 32, 32, "batball.png", 32, 32, 4, projectile_speed, 0, 200, gravity, dmg)
+
+class BigClock(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 64, 64, "bigclock.png", 64, 64, 6, projectile_speed, 0, 150, gravity, dmg)
 
 class Item(Creation):
 
