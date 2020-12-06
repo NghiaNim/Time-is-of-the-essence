@@ -196,7 +196,7 @@ class Creation:
 class Hero(Creation):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, time, dmg, speed):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False, 'E':False}
+        self.key_handler = {LEFT:False, RIGHT:False, SHIFT:False, UP:False, DOWN:False, 'Q':False, 'E':False}
         self.standing_y = y
         self.standing_h = h
         self.direction = RIGHT
@@ -316,7 +316,7 @@ class Hero(Creation):
                 else:
                     self.vx = 0
         
-                if self.key_handler[UP] == True and self.y+self.h == self.g:
+                if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
                     self.vy = -7
 
             if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
@@ -336,10 +336,9 @@ class Hero(Creation):
             else:
                 self.vx = -7
     
-            if self.key_handler[UP] == True and self.y+self.h == self.g:
+            if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
                 self.vy = -10
 
-        #Attack Handler
 
         
         #frames of animation based on action
@@ -464,11 +463,26 @@ class Hero(Creation):
 
 
     def attack(self):
-
+        
         if self.direction == LEFT:
             p_vx = -1
+            p_vy = 0
+            
         elif self.direction == RIGHT:
             p_vx = 1
+            p_vy = 0        
+            
+        
+        if self.key_handler[UP] == True:
+            p_vy = -1
+            if self.key_handler[LEFT]:
+                p_vy = -.5
+            elif self.key_handler[RIGHT]:
+                p_vy = -.5
+            else:
+                p_vx = 0
+            
+            
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
             if not self.autofire:
@@ -478,7 +492,7 @@ class Hero(Creation):
             else:
                 self.bullet_img = 'bullet_up.png'
 
-            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
+            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, 8*p_vy, 150, False, self.dmg))
 
 
 
@@ -865,12 +879,13 @@ class Projectile(Creation):
             self.gravity()
             self.y += self.vy    
         self.x += self.vx
+        self.y += self.vy
 
         # If the projectile exceeds its framespan, it ought not to exist anymore
         if frameCount - self.framestart > self.framespan:
             self.destroy()
 
-        if self.y+self.h == game.g:
+        if self.y+self.h > game.g:
             self.destroy()
 
     def destroy(self):
@@ -882,11 +897,11 @@ class Projectile(Creation):
 
 class ClockProjectile(Projectile):
     def __init__(self, x, y, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -4, 150, True, dmg)
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -2, 150, True, dmg)
 
 class SmallFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
-        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, -7, 150, gravity, dmg)
+        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, 0, 150, gravity, dmg)
 
 class BatBall(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
@@ -1088,8 +1103,10 @@ def keyPressed():
         game.hero.key_handler[LEFT] = True
     elif keyCode == RIGHT:
         game.hero.key_handler[RIGHT] = True
+    elif keyCode == SHIFT:
+        game.hero.key_handler[SHIFT] = True
     elif keyCode == UP:
-        game.hero.key_handler[UP] = True
+        game.hero.key_handler[UP] = True        
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = True 
     elif key == 'Q' or key == 'q':
@@ -1107,14 +1124,17 @@ def keyReleased():
         game.hero.key_handler[LEFT] = False
     elif keyCode == RIGHT:
         game.hero.key_handler[RIGHT] = False
+    elif keyCode == SHIFT:
+        game.hero.key_handler[SHIFT] = False
     elif keyCode == UP:
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
-        game.hero.key_handler[DOWN] = False
+        game.hero.key_handler[DOWN] = False 
     elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = False
         if game.hero.reloadtime == 0:
             game.hero.attack()
+
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = False
         
