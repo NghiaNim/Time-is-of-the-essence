@@ -54,9 +54,21 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.obstaclelist.append(Wall(line[0], line[1]))
 
+            elif line[0] == 'SmallWall':
+                line = list(map(int, line[1:]))
+                self.obstaclelist.append(SmallWall(line[0], line[1]))
+
             elif line[0] == 'Platform':
                 line = list(map(int, line[1:]))
                 self.platformlist.append(Platform(line[0], line[1]))
+
+            elif line[0] == 'ShortPlatform':
+                line = list(map(int, line[1:]))
+                self.platformlist.append(ShortPlatform(line[0], line[1]))
+
+            elif line[0] == 'LongPlatform':
+                line = list(map(int, line[1:]))
+                self.platformlist.append(LongPlatform(line[0], line[1]))
 
             elif line[0] == 'end':
                 global gameScreen
@@ -1003,9 +1015,21 @@ class Wall(Obstacle):
     def __init__(self, x, y):
         Obstacle.__init__(self, x, y, 69, 80, "wall.png", 69, 80)
 
+class SmallWall(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 46, 40, "smallwall.png", 46, 40)
+
 class Platform(Obstacle):
     def __init__(self, x, y):
         Obstacle.__init__(self, x, y, 256, 30, "platform.png", 256, 30)
+
+class ShortPlatform(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 100, 30, "shortplatform.png", 100, 30)
+
+class LongPlatform(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 448, 30, "longplatform.png", 448, 30)
 
 class Portal(Creation):
     def __init__(self, x, y, w, h):

@@ -12,7 +12,10 @@ BuffItem,900,200,2
 #parameters: x,y,w,h
 Wall,550,840
 Wall,800,840
+SmallWall,1400,880
 Platform,880,770
+ShortPlatform,1150,700
+LongPlatform,1200,620
 
 TimeWraith,800,700,920,200,800
 Worm,700,700,920,550,1000
