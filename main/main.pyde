@@ -42,6 +42,10 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(TimeWizard(line[0],line[1],line[2],line[3],line[4]))
 
+            elif line[0] == 'Bat':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(Bat(line[0],line[1],line[2],line[3],line[4]))
+
             elif line[0] == 'BuffItem':
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
@@ -590,6 +594,7 @@ class Enemy(Creation):
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
+        self.flying = False
         
         self.vx = vx
         if self.direction == LEFT:
@@ -601,7 +606,8 @@ class Enemy(Creation):
 
     def update(self):
         if self.alive == True:
-            self.gravity()
+            if self.flying == False:
+                self.gravity()
 
 
             # Idle and attack loop (enemy will stop walking so he can attack)
@@ -724,7 +730,8 @@ class Enemy(Creation):
 
     def damage(self, dmg, dir): 
         self.hp -= dmg
-        self.vy -= 3
+        if self.flying == False:
+            self.vy -= 3
 
 
     def destroy(self):
@@ -792,6 +799,25 @@ class TimeWizard(Enemy):
             game.enemy_projectiles.append(SmallFireball(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile, self.p_gravity))
             game.enemy_projectiles.append(SmallFireball(self.x+self.w, self.y+5, self.projectile_speed, self.dmg_projectile, self.p_gravity))
 
+class Bat(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 0, 10, 5, 1, 50, False, True, 100)
+        self.flying = True
+
+    def attack(self):
+            game.enemy_projectiles.append(BatBall(self.x, self.y, 0, self.dmg_projectile, self.p_gravity))
+
+    def display(self):
+        self.update() 
+        #rect(self.x, self.y, self.w, self.h)
+        if self.alive == True:      
+            if self.idle == False:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.idle == True:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+        elif self.alive == False:
+            image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+
 
 class Projectile(Creation):
 
@@ -830,8 +856,11 @@ class Projectile(Creation):
             self.y += self.vy    
         self.x += self.vx
 
-        # If the projectile exceeds its framespan, it ought not exist anymore
+        # If the projectile exceeds its framespan, it ought not to exist anymore
         if frameCount - self.framestart > self.framespan:
+            self.destroy()
+
+        if self.y+self.h == game.g:
             self.destroy()
 
     def destroy(self):
@@ -848,6 +877,10 @@ class ClockProjectile(Projectile):
 class SmallFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
         Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, -7, 150, gravity, dmg)
+
+class BatBall(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 32, 32, "batball.png", 32, 32, 4, projectile_speed, 0, 200, gravity, dmg)
 
 class Item(Creation):
 
