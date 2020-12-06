@@ -574,11 +574,13 @@ class John(Hero):
         for enemy in game.enemylist:
             if isinstance(enemy,Portal):
                 continue
-            enemy.damage(stomp, LEFT)
-            enemy.vy -= 3
-            enemy.y += enemy.vy
+            if enemy.flying == False:
+                enemy.damage(stomp, LEFT)
+                enemy.vy -= 3
+                enemy.y += enemy.vy
+                
             self.time -= self.dmg//2
-            pass
+
 
         
         self.real_active_ability_cooldown = self.active_ability_cooldown 
@@ -753,10 +755,9 @@ class Enemy(Creation):
         self.alive = False
 
     def damage(self, dmg, dir): 
-        self.hp -= dmg
         if self.flying == False:
             self.vy -= 3
-
+        self.hp -= dmg
 
     def destroy(self):
         rand_int = random.randint(0,100)
