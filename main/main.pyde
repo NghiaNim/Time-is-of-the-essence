@@ -632,8 +632,7 @@ class Enemy(Creation):
 
     def update(self):
         if self.alive == True:
-            if self.flying == False:
-                self.gravity()
+            self.gravity()
 
 
             # Idle and attack loop (enemy will stop walking so he can attack)
@@ -755,8 +754,7 @@ class Enemy(Creation):
         self.alive = False
 
     def damage(self, dmg, dir): 
-        if self.flying == False:
-            self.vy -= 3
+        self.vy -= 3
         self.hp -= dmg
 
     def destroy(self):
@@ -826,22 +824,20 @@ class TimeWizard(Enemy):
 
 class Bat(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 0, 10, 5, 1, 50, False, True, 100)
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 50, False, True, 100)
         self.flying = True
+        self.g = y
 
     def attack(self):
             game.enemy_projectiles.append(BatBall(self.x, self.y, 0, self.dmg_projectile, self.p_gravity))
 
-    def display(self):
-        self.update() 
-        #rect(self.x, self.y, self.w, self.h)
-        if self.alive == True:      
-            if self.idle == False:
-                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
-            elif self.idle == True:
-                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
-        elif self.alive == False:
-            image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+    def gravity(self):
+        if self.y + self.h >= self.g:
+            self.vy = 0
+        else:
+            self.vy += 0.3
+            if self.y + self.h + self.vy > self.g:
+                self.vy = self.g - (self.y + self.h)
 
 
 class Projectile(Creation):
