@@ -38,6 +38,14 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
 
+            elif line[0] == 'TimeWizard':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(TimeWizard(line[0],line[1],line[2],line[3],line[4]))
+
+            elif line[0] == 'Bat':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(Bat(line[0],line[1],line[2],line[3],line[4]))
+
             elif line[0] == 'BuffItem':
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
@@ -350,13 +358,13 @@ class Hero(Creation):
             elif isinstance(enemy, Portal):
                 continue
 
-            elif self.collision_rect_right(enemy) and self.invincible <= 0:
+            elif self.collision_rect_right(enemy) and self.invincible <= 0 and enemy.alive == True:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
 
-            elif self.collision_rect_left(enemy) and self.invincible <= 0:
+            elif self.collision_rect_left(enemy) and self.invincible <= 0 and enemy.alive == True:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.knockback = True
@@ -579,35 +587,43 @@ class Enemy(Creation):
         self.p_gravity = p_gravity # should the gravity apply on its projectiles
         self.dmg_projectile = dmg_projectile # Projectile dmg
         self.droprate = droprate
+        self.attack_count = attack_count
+        self.attacked_cnt = 0 #records the series of attacks
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
-        self.attack_count = attack_count
+        self.flying = False
+        
         self.vx = vx
         if self.direction == LEFT:
             self.vx *= -1
         self.xleft = xl #left X boundary
         self.xright = xr # right x boundary
         self.tmp_vx = 0
+        
 
     def update(self):
         if self.alive == True:
-            self.gravity()
+            if self.flying == False:
+                self.gravity()
 
-            # Idle and attack loop (enemy will stop to attack)
+
+            # Idle and attack loop (enemy will stop walking so he can attack)
             if frameCount - self.framestart > self.attackspeed:
                 if self.idle == False:
                     self.tmp_vx = self.vx
                     self.vx = 0
                     self.idle = True
-                if self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
                     if self.projectile_bol == True: #Does the enemy shoot projectiles?
                         self.attack()
-                if self.idle_count-1 == self.num_idle_frames:
+                    self.attacked_cnt += 1       
+                if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
                     self.framestart = frameCount
                     self.vx = self.tmp_vx
                     self.idle = False
-
+                    self.attacked_cnt = 0
+            
             # If the enemy should follow the hero this will change its direction
             if self.follow_bol == True:
                 self.follow()
@@ -645,7 +661,6 @@ class Enemy(Creation):
             # slow down idle frames
             if self.vx == 0 and frameCount%10 == 0:
                 self.idle_frame = (self.idle_frame + 1) % self.num_idle_frames
-                self.idle_count += 1
             elif self.vx != 0:
                 self.idle_frame = 0
                 self.idle_count = 0
@@ -664,7 +679,7 @@ class Enemy(Creation):
 
     def display(self):
         self.update() 
-        rect(self.x, self.y, self.w, self.h)
+        #rect(self.x, self.y, self.w, self.h)
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -713,7 +728,8 @@ class Enemy(Creation):
 
     def damage(self, dmg, dir): 
         self.hp -= dmg
-        self.vy -= 3
+        if self.flying == False:
+            self.vy -= 3
 
 
     def destroy(self):
@@ -724,7 +740,7 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 180, x_left, x_right, 100, 3, 10, 5.5, 3, 50, True, False, 100)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 100, 3, 10, 5.5, 2, 50, True, False, 100)
 
     def attack(self):
         if self.direction == LEFT:
@@ -735,7 +751,6 @@ class TimeWraith(Enemy):
     # Wraith has its own display method for discrepancies in its sprite. Given my lack of experience with photoshop or any graphical program this is easier
     def display(self):
         self.update()
-        rect(self.x, self.y, self.w, self.h) 
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
                 image(self.img, self.x-14, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
@@ -755,6 +770,51 @@ class Worm(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 3, 0, 12, 1, 50, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
+
+class TimeWizard(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
+        self.projectile_speed = 7 # VX attribute of the casted projectile
+
+    def display(self):
+        self.update()
+        if self.alive == True:      
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
+        elif self.alive == False:
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-50, self.y-80, self.img_w//2, self.img_h//2, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+    def attack(self):
+            game.enemy_projectiles.append(SmallFireball(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile, self.p_gravity))
+            game.enemy_projectiles.append(SmallFireball(self.x+self.w, self.y+5, self.projectile_speed, self.dmg_projectile, self.p_gravity))
+
+class Bat(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 0, 10, 5, 1, 50, False, True, 100)
+        self.flying = True
+
+    def attack(self):
+            game.enemy_projectiles.append(BatBall(self.x, self.y, 0, self.dmg_projectile, self.p_gravity))
+
+    def display(self):
+        self.update() 
+        #rect(self.x, self.y, self.w, self.h)
+        if self.alive == True:      
+            if self.idle == False:
+                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.idle == True:
+                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+        elif self.alive == False:
+            image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
 
 
 class Projectile(Creation):
@@ -779,7 +839,7 @@ class Projectile(Creation):
         if self.y + self.h >= self.g:
             self.vy = 0
         else:
-            self.vy += 0.3
+            self.vy += 0.1
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
@@ -794,8 +854,11 @@ class Projectile(Creation):
             self.y += self.vy    
         self.x += self.vx
 
-        # If the projectile exceeds its framespan, it ought not exist anymore
+        # If the projectile exceeds its framespan, it ought not to exist anymore
         if frameCount - self.framestart > self.framespan:
+            self.destroy()
+
+        if self.y+self.h == game.g:
             self.destroy()
 
     def destroy(self):
@@ -807,7 +870,15 @@ class Projectile(Creation):
 
 class ClockProjectile(Projectile):
     def __init__(self, x, y, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -6, 150, False, dmg)
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -4, 150, True, dmg)
+
+class SmallFireball(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, -7, 150, gravity, dmg)
+
+class BatBall(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 32, 32, "batball.png", 32, 32, 4, projectile_speed, 0, 200, gravity, dmg)
 
 class Item(Creation):
 
@@ -988,6 +1059,7 @@ def drawEnd():
         
 def setup():
     size(WIDTH, HEIGHT)
+    fullScreen()
     
 def draw():
     if gameScreen == 0:
