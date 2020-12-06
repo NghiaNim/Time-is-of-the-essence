@@ -589,7 +589,7 @@ class Jill(Hero):
         self.base_shootingspeed = 15
         self.shootingspeed = self.base_shootingspeed
 
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 45, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
 
