@@ -619,7 +619,7 @@ class Enemy(Creation):
                 if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
                     if self.projectile_bol == True: #Does the enemy shoot projectiles?
                         self.attack()
-                        self.attacked_cnt += 1       
+                    self.attacked_cnt += 1       
                 if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
                     self.framestart = frameCount
                     self.vx = self.tmp_vx
@@ -1061,6 +1061,7 @@ def drawEnd():
         
 def setup():
     size(WIDTH, HEIGHT)
+    fullScreen()
     
 def draw():
     if gameScreen == 0:
