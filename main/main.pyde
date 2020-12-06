@@ -8,6 +8,10 @@ WIDTH = 1920
 HEIGHT = 1080
 gameScreen = 0
 gameground = 920
+player = Minim(this)
+main_theme = player.loadFile(path + "/Sound/main_theme.mp3")
+main_theme.rewind()
+main_theme.loop()
 
 class Game:
     def __init__(self, w, h, g, hero):
@@ -27,13 +31,21 @@ class Game:
         for line in level:
             if line == '\n':
                 break
-
+            
+            
             line = line.strip().split(',')
             if line[0] == 'TimeWraith':
                 line = list(map(int, line[1:]))
                 self.enemylist.append(TimeWraith(line[0],line[1],line[2],line[3],line[4]))
 
-
+            if line[0] == 'Sound':
+                global main_theme
+                main_theme.close()
+                main_theme = player.loadFile(path + "/Sound/" + line[1] + '.mp3')
+                main_theme.rewind()
+                main_theme.loop()
+                
+                
             elif line[0] == 'Worm':
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
@@ -256,6 +268,9 @@ class Hero(Creation):
         self.active_speed = 0 #for speed buff
         self.active_damage = 0 #for damage buff
         self.active_shooting_speed = 0 #for shooting speed buff
+        
+        self.gravityBullet = False
+        self.gravityTime = 0
 
     def update(self):
         if self.autofire == True and frameCount%60 == 0:
@@ -273,6 +288,12 @@ class Hero(Creation):
 
                 if self.reloadtime == 0:
                     self.charges = self.base_charges
+                    
+        if self.gravityBullet == True and frameCount%60 == 0:
+            self.gravityTime -= 1
+            if self.gravityTime < 0:
+                self.gravityBullet = False
+
 
 
         self.gravity()
@@ -281,12 +302,16 @@ class Hero(Creation):
         
         if self.invincible < 0:
             self.hit_right = False
-
+            
         if self.active_damage == 0:
             self.dmg = self.base_dmg
+
         elif frameCount %60 == 0:
             self.active_damage -= 1
         
+        if self.gravityBullet == True:
+            self.dmg = self.base_dmg * 1.2
+            
         if self.active_speed == 0:
             self.speed = self.base_speed
         elif frameCount %60 == 0:
@@ -329,7 +354,7 @@ class Hero(Creation):
                     self.vx = 0
         
                 if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
-                    self.vy = -7
+                    self.vy = -9
 
             if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
                 self.special_ability()
@@ -403,6 +428,13 @@ class Hero(Creation):
                     future_collision = True
         if future_collision == False:
             self.x += self.vx
+            
+        if self.x < 0:
+            self.x = 0
+            
+        elif self.x + self.w > 1920:
+            self.x = 1920 - self.w
+        
         self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
@@ -451,7 +483,7 @@ class Hero(Creation):
             strokeWeight(1.5)
             stroke(255,255,0)
 
-            ellipse(self.x + 15, self.y - 15 , 20, 8)
+            ellipse(self.x + 15, self.y , 20, 8)
         
         textSize(20)
         fill(255,255,255)
@@ -464,13 +496,17 @@ class Hero(Creation):
 
         if self.autofire == True:
             fill(0,255,0)
-            text('Rapid-fire mode', 400, 1000)
+            text('Rapid-fire mode!', 400, 1000)
 
         if game.hero.buffed_time > 0:
             fill(0,255,0)
             text('DAMAGE UP!', 400, 1030)
             if frameCount % 60 == 0:
                 game.hero.buffed_time -= 1
+                
+        if self.gravityBullet == True:
+            fill(0,255,0)
+            text('Gravity Bullets!', 400, 1060)
 
 
 
@@ -503,9 +539,11 @@ class Hero(Creation):
                 self.bullet_img = 'bullet.png'
             else:
                 self.bullet_img = 'bullet_up.png'
-
-            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, 8*p_vy, 150, False, self.dmg))
-
+            
+            if self.gravityBullet == True and not self.key_handler[UP]:
+                game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -1.5, 150, self.gravityBullet, self.dmg))
+            else:
+                game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, 8*p_vy, 150, self.gravityBullet, self.dmg))
 
 
     def invincible_buff(self, time):
@@ -551,7 +589,7 @@ class Jill(Hero):
         self.base_shootingspeed = 15
         self.shootingspeed = self.base_shootingspeed
 
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 45, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
 
@@ -777,7 +815,7 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 100, 3, 10, 5.5, 2, 50, True, False, 100)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 70, 2.5, 10, 5.5, 2, 50, True, False, 100)
 
     def attack(self):
         if self.direction == LEFT:
@@ -805,7 +843,7 @@ class TimeWraith(Enemy):
 
 class Worm(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 3, 0, 12, 1, 50, True, False, 350)
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 50, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
 class TimeWizard(Enemy):
@@ -965,18 +1003,20 @@ class BuffItem(Item):
                 game.hero.buffed_time = 5
                 pass
             
-            #time freeze
+            #rapid-fire
             elif self.item == 'Bananas':
                 game.hero.autofire = True
                 game.hero.autofiretime = 10 
                 pass 
                     
-            #insta kill
+            #time freeze
             elif self.item == 'Melon':
                 pass
                 
-            #invincibility
+            #gravity bullet
             elif self.item == 'Orange':
+                game.hero.gravityBullet = True
+                game.hero.gravityTime = 10
                 pass
         
             self.destroy()
@@ -1186,7 +1226,7 @@ def draw():
     
 
 def keyPressed():
-    global gameScreen
+    global gameScreen, main_theme
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = True
     elif keyCode == RIGHT:
@@ -1202,6 +1242,10 @@ def keyPressed():
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = True
     if gameScreen == 3 and (key == 'R' or key == 'r'):
+        main_theme.close()
+        main_theme = player.loadFile(path + "/Sound/main_theme.mp3")
+        main_theme.rewind()
+        main_theme.loop()
         gameScreen = 1
 
 
