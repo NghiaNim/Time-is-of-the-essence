@@ -460,15 +460,15 @@ class Hero(Creation):
 
         if self.reloadtime != 0:
             fill(255,255,255)
-            text('Recharging...', 100, 900)
+            text('Recharging...', 100, 1000)
 
         if self.autofire == True:
             fill(0,255,0)
-            text('Rapid-fire mode', 100, 940)
+            text('Rapid-fire mode', 400, 1000)
 
         if game.hero.buffed_time > 0:
             fill(0,255,0)
-            text('DAMAGE UP!', 100, 920)
+            text('DAMAGE UP!', 400, 1030)
             if frameCount % 60 == 0:
                 game.hero.buffed_time -= 1
 
@@ -1055,35 +1055,69 @@ class Portal(Creation):
 
     
             
-def drawMenu():
-    background(255, 255, 255)
-    stroke(0,0,0)
-    fill(0)
+def drawMenu_1():
+    img = loadImage(path + "/images/main_menu.jpg")
+    image(img,0,0)
+
+    img_title = loadImage(path + "/images/title.png")
+    image(img_title, 1250, 0)
+
     textSize(50)
-    text('Choose your champion', 100, 100)
-    noFill()
-    rect(100, 200, 300, 100)
-    text('Jack', 200, 270)
-    rect(100, 400, 300, 100)
-    text('Jill', 200, 470)
-    rect(100, 600, 300, 100)
-    text('John', 200, 670)
+    fill(255,255,255)
+    text('Play', 200, 270)
+
+    text('Control', 200, 470)
+
+    text('Quit', 200, 670)
+
     if 100<=mouseX<=400 and 200<=mouseY<=300:
-        stroke(0,255,0)
-        rect(100, 200, 300, 100)
-    
+        fill(0,255,0)
+        text('Play', 200, 270)
+
     elif 100<=mouseX<=400 and 400<=mouseY<=500:
-        stroke(0,255,0)
-        rect(100, 400, 300, 100)
+        fill(0,255,0)
+        text('Control', 200, 470)
     
     elif 100<=mouseX<=400 and 600<=mouseY<=700:
-        stroke(0,255,0)
-        rect(100, 600, 300, 100)
+        fill(0,255,0)
+        text('Quit', 200, 670)
+
+def drawMenu_2():
+    img = loadImage(path + "/images/menu_2.jpg")
+    image(img,0,0)
+
+    img_title = loadImage(path + "/images/title.png")
+    image(img_title, 1250, 0)
+
+    fill(0,68,129)
+    textSize(70)
+    text('CHARACTER SELECT', 200, 150)
+
+    fill(255,255,255)
+    text('McMillian Sondai\'el', 200, 370)
+
+    text('Jody Howar Glas', 200, 570)
+
+    text('Peterpen Julumn', 200, 770)
+
+    if 100<=mouseX<=850 and 300<=mouseY<=400:
+        fill(0,255,0)
+        text('McMillian Sondai\'el', 200, 370)
+        
+    
+    elif 100<=mouseX<=760 and 500<=mouseY<=600:
+        fill(0,255,0)
+        text('Jody Howar Glas', 200, 570)
+    
+    elif 100<=mouseX<=760 and 700<=mouseY<=800:
+        fill(0,255,0)
+        text('Peterpen Julumn', 200, 770)
+
+
     pass
 
 def drawGame():
     global game, level
-    background(255, 255, 255)
     game.display()
     if game.hero.time < 0:
         level = open('level_design.txt','r')
@@ -1095,15 +1129,44 @@ def drawGame():
         game = Game(WIDTH, HEIGHT, gameground, hero) 
         game.hero.time = real_time
 
+def drawControl():
+    background(0)
+    fill(255,255,255)
+    
+    textSize(50)
+    text('MOVEMENTS', 200, 370)
+    text('ATTACKS', 1000, 370)
+    text('BACK', 1700, 900)
+    
+    textSize(30)
+    text('LEFT RIGHT ARROW KEYS: move sideways', 200, 450)
+    text('LEFT SHIFT: jump', 200, 500)
+    text('DOWN ARROW KEY: crouch', 200, 550)
+    text('LEFT ARROW KEY: aim up', 200, 600)
+
+    text('Q (Normal): Fire (press and release)', 1000, 450)
+    text('Q (Rapid-fire-mode): Fire (hold)', 1000, 500)
+    text('E: Special ability', 1000, 550)
+
+    if 1650<=mouseX<=1850 and 820<=mouseY<=920:
+        textSize(50)
+        fill(0,255,0)
+        text('BACK', 1700, 900)
+
+
+
+
 def drawEnd():
-    background(255, 255, 255)
+    end_img = loadImage(path + "/images/end_menu.jpg")
+    image(end_img,0,0)
+
     stroke(0,0,0)
-    fill(0)
+    fill(48,93,228)
     textSize(50)
     text('You have successfully destroyed time', 500, 200)
     text('Enjoy your eternal meaningless existence', 460, 260)
     textSize(20)
-    text('Or press R to go back to character select', 750, 300)
+    text('(Or press R to go back to character select)', 750, 300)
         
 def setup():
     size(WIDTH, HEIGHT)
@@ -1111,11 +1174,15 @@ def setup():
     
 def draw():
     if gameScreen == 0:
-        drawMenu()
+        drawMenu_1()
     elif gameScreen == 1:
-        drawGame()
+        drawMenu_2()
     elif gameScreen == 2:
+        drawGame()
+    elif gameScreen == 3:
         drawEnd()
+    elif gameScreen == 'help':
+        drawControl()
     
 
 def keyPressed():
@@ -1134,8 +1201,8 @@ def keyPressed():
         game.hero.key_handler['Q'] = True
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = True
-    if gameScreen == 2 and (key == 'R' or key == 'r'):
-        gameScreen = 0
+    if gameScreen == 3 and (key == 'R' or key == 'r'):
+        gameScreen = 1
 
 
 
@@ -1162,21 +1229,34 @@ def keyReleased():
 def mousePressed():
     global gameScreen,game,hero,level
     #Choose Jack
+    if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
+        gameScreen = 'help'
+
+    if gameScreen == 'help' and 1700<=mouseX<=1900 and 800<=mouseY<=1000:
+        gameScreen = 0
+
+    if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
+        exit()
+
     if gameScreen == 0 and 100<=mouseX<=400 and 200<=mouseY<=300:
+        gameScreen = 1
+
+    #Choose Jack
+    elif gameScreen == 1 and 100<=mouseX<=850 and 300<=mouseY<=400:
         hero = 'Jack'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
-        gameScreen = 1
+        gameScreen = 2
     #Choose Jill
-    if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 500<=mouseY<=600:
         hero = 'Jill'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
-        gameScreen = 1
+        gameScreen = 2
     #Choose John
-    if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 700<=mouseY<=800:
         hero = 'John'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)        
-        gameScreen = 1
+        gameScreen = 2
         
