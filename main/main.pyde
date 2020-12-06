@@ -223,9 +223,6 @@ class Hero(Creation):
 
         self.col_framestamp = frameCount
 
-        self.base_shootingspeed = 0
-        self.shootingspeed = 0
-
         self.shoot_framestamp = frameCount
         
         self.invincible = 0
@@ -295,14 +292,17 @@ class Hero(Creation):
         if self.knockback == False or self.invincible < 25:
             if self.invincible == 24:
                 self.knockback = False
-
+                
+            if self.key_handler['Q'] == True and self.autofire == True:
+                    self.attack()
+                    
             if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
                 self.vx = 0
                 self.y = self.standing_y + self.standing_h/2
                 self.h = self.standing_h/2
+                
             else:
-                if self.key_handler['Q'] == True and self.autofire == True:
-                    self.attack()
+                
             
                 self.y = self.standing_y
                 self.h = self.standing_h
@@ -352,6 +352,7 @@ class Hero(Creation):
 
         #check for hit
         for enemy in game.enemylist:
+            
             #check for endgame
             if isinstance(enemy, Portal) and (self.collision_rect_right(enemy) or self.collision_rect_left(enemy)) and enemy.frame > 40 :
                 game.next_level = True
@@ -397,12 +398,12 @@ class Hero(Creation):
 
 
     def display(self):
-        
-        #rectangle to show hitbox
         self.update()
-        noFill()
-        fill(0,0,0)
-        rect(self.x, self.y, self.w, self.h)
+        #rectangle to show hitbox
+
+        # noFill()
+        # fill(0,0,0)
+        # # rect(self.x, self.y, self.w, self.h)
         
         
         if self.key_handler[DOWN] == True and self.y+self.h == self.g:
@@ -442,6 +443,7 @@ class Hero(Creation):
             ellipse(self.x + 15, self.y - 15 , 20, 8)
         
         textSize(20)
+        fill(255,255,255)
         text('Remaining time: ' + str(self.time), 50, 30)
         text('(E) Ability cooldown: ' + str(self.real_active_ability_cooldown), 300, 30)
 
@@ -467,17 +469,16 @@ class Hero(Creation):
             p_vx = -1
         elif self.direction == RIGHT:
             p_vx = 1
-            
-        self.shoot_framestamp = frameCount
-        if not self.autofire:
-            self.charges -= 1
-        if self.active_damage == 0:
-            self.bullet_img = 'bullet.png'
-        else:
-            self.bullet_img = 'bullet_up.png'
+        if frameCount - self.shoot_framestamp > self.shootingspeed:
+            self.shoot_framestamp = frameCount
+            if not self.autofire:
+                self.charges -= 1
+            if self.active_damage == 0:
+                self.bullet_img = 'bullet.png'
+            else:
+                self.bullet_img = 'bullet_up.png'
 
-        game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
-
+            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
 
 
 
@@ -500,10 +501,13 @@ class Hero(Creation):
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 8
+        self.base_shootingspeed = 20
+        self.shootingspeed = self.base_shootingspeed
+        
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 20
+
 
         
     def special_ability(self):
@@ -518,10 +522,12 @@ class Jack(Hero):
 class Jill(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 10
+        self.base_shootingspeed = 15
+        self.shootingspeed = self.base_shootingspeed
+
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 15
 
 
     def special_ability(self):
@@ -539,10 +545,12 @@ class Jill(Hero):
 class John(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 6
+        self.base_shootingspeed = 22
+        self.shootingspeed = self.base_shootingspeed
+        
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
         self.active_ability_time = 1
         self.active_ability_cooldown = 30
-        self.base_shootingspeed = 22
 
 
         
@@ -550,6 +558,8 @@ class John(Hero):
         #tank stomp
         stomp = self.dmg*3
         for enemy in game.enemylist:
+            if isinstance(enemy,Portal):
+                continue
             enemy.damage(stomp, LEFT)
             enemy.vy -= 3
             enemy.y += enemy.vy
