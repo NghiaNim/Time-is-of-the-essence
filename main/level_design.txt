@@ -2,17 +2,18 @@
 #possible tutorial here
 
 #parameters: x, y, g, x_left, x_right
-TimeWraith,200,700,800,200,800
-Worm,600,700,800,550,1000
+TimeWraith,200,700,920,200,800
+Worm,900,700,920,880,1400
 #parameters:x,y,type
 BuffItem,700,500,1
 BuffItem,900,200,2
 #parameters: x,y,w,h
-Wall,550,752,24,48
-Wall,800,752,24,48
+Wall,550,840
+Wall,800,840
+Platform,880,770
 
-TimeWraith,800,700,800,200,800
-Worm,700,700,800,550,1000
+TimeWraith,800,700,920,200,800
+Worm,700,700,920,550,1000
 BuffItem,900,200,2
 
 end

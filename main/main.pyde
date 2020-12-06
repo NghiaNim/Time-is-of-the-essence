@@ -7,6 +7,7 @@ player = Minim(this)
 WIDTH = 1920
 HEIGHT = 1080
 gameScreen = 0
+gameground = 920
 
 class Game:
     def __init__(self, w, h, g, hero):
@@ -16,9 +17,12 @@ class Game:
         self.hero_projectiles = []
         self.enemylist = []
         self.itemlist = []
+        self.platformlist = []
         self.obstaclelist = []
         self.g = g
         self.next_level = False
+        self.background = loadImage(path + "/images/background.png")
+        self.groundimg = loadImage(path + "/images/ground.png")
         
         for line in level:
             if line == '\n':
@@ -40,22 +44,16 @@ class Game:
 
             elif line[0] == 'Wall':
                 line = list(map(int, line[1:]))
-                self.obstaclelist.append(Obstacle(line[0], line[1], line[2], line[3], 'doubleblock.png', line[2], line[3]))
+                self.obstaclelist.append(Wall(line[0], line[1]))
+
+            elif line[0] == 'Platform':
+                line = list(map(int, line[1:]))
+                self.platformlist.append(Platform(line[0], line[1]))
 
             elif line[0] == 'end':
                 global gameScreen
                 gameScreen += 1
 
-            
-
-        #Enemy Test
-        # self.enemylist.append(TimeWraith(200, 700, 800, 200, 800))
-        # self.enemylist.append(Worm(600, 700, 800, 550, 1000))
-        #obstacle test
-        # self.obstaclelist.append(Obstacle(550, 752, 24, 48, "doubleblock.png", 24, 48))
-
-        #item test
-        # self.itemlist.append(BuffItem(700, 500, self.g, 1))
 
         #random sprite for hero
         if hero == 'Jack':
@@ -83,6 +81,8 @@ class Game:
         fill(0,0,0)
         stroke(0,0,0)
         rect(0,self.g,WIDTH,HEIGHT)
+        image(self.background, 0, 0)
+        image(self.groundimg,0, 0)
         for e in self.enemylist:
             e.display()
 
@@ -96,9 +96,8 @@ class Game:
             i.display()
         for o in self.obstaclelist:
             o.display()
-
-
-
+        for p in self.platformlist:
+            p.display()
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -123,13 +122,22 @@ class Creation:
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
+
+        changedg = False
         if len(game.obstaclelist) != 0:
             for o in game.obstaclelist:
                 if self.y + self.h <= o.y and ((self.x + self.w >= o.x and self.x + self.w <= o.x + o.w) or (self.x <= o.x + o.w and self.x >= o.x)) or ((2*self.x+self.w)/2 <= o.x + o.w and (2*self.x+self.w)/2 >= o.x)  :
                     self.g = o.y
+                    changedg = True
                     break
-                else:
-                    self.g = game.g
+        if len(game.platformlist) != 0:
+            for p in game.platformlist:
+                if self.y + self.h <= p.y and self.x + self.w >= p.x and self.x <= p.x + p.w:
+                    self.g = p.y
+                    changedg = True
+                    break
+        if changedg == False:
+            self.g = game.g
                 
     def update(self):
         self.gravity()
@@ -892,6 +900,14 @@ class Obstacle(Creation):
             if self.collision_rect(p):
                 p.destroy()
 
+class Wall(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 69, 80, "wall.png", 69, 80)
+
+class Platform(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 256, 30, "platform.png", 256, 30)
+
 class Portal(Creation):
     def __init__(self, x, y, w, h):
         self.x = x
@@ -952,12 +968,12 @@ def drawGame():
     game.display()
     if game.hero.time < 0:
         level = open('level_design.txt','r')
-        game = Game(WIDTH, HEIGHT, 800, hero)
+        game = Game(WIDTH, HEIGHT, gameground, hero)
 
     if game.next_level == True:
         global real_time
         real_time = game.hero.time
-        game = Game(WIDTH, HEIGHT, 800, hero) 
+        game = Game(WIDTH, HEIGHT, gameground, hero) 
         game.hero.time = real_time
 
 def drawEnd():
@@ -1024,18 +1040,18 @@ def mousePressed():
     if gameScreen == 0 and 100<=mouseX<=400 and 200<=mouseY<=300:
         hero = 'Jack'
         level = open('level_design.txt','r')
-        game = Game(WIDTH, HEIGHT, 800, hero)
+        game = Game(WIDTH, HEIGHT, gameground, hero)
         gameScreen = 1
     #Choose Jill
     if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
         hero = 'Jill'
         level = open('level_design.txt','r')
-        game = Game(WIDTH, HEIGHT, 800, hero)
+        game = Game(WIDTH, HEIGHT, gameground, hero)
         gameScreen = 1
     #Choose John
     if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
         hero = 'John'
         level = open('level_design.txt','r')
-        game = Game(WIDTH, HEIGHT, 800, hero)        
+        game = Game(WIDTH, HEIGHT, gameground, hero)        
         gameScreen = 1
         
