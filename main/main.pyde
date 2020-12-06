@@ -851,12 +851,12 @@ class TimeWraith(Enemy):
 
 class Worm(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 50, True, False, 350)
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 70, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
 class TimeWizard(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
+        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 70, False, False, 100)
         self.projectile_speed = 7 # VX attribute of the casted projectile
 
     def display(self):
@@ -882,7 +882,7 @@ class TimeWizard(Enemy):
 
 class Bat(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 50, False, True, 100)
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 70, False, True, 100)
         self.flying = True
         self.g = y
 
@@ -899,7 +899,7 @@ class Bat(Enemy):
 
 class Reaper(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 100, 3, 10, 5.5, 1, 50, False, False, 100)
+        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 100, 3, 10, 5.5, 1, 100, False, False, 100)
         self.attackmode = 0
         self.barrage_cnt = 13
         self.sidebarrage_cnt = 40
@@ -932,20 +932,26 @@ class Reaper(Enemy):
                     p_dir = 1
                 else:
                     p_dir = -1
-                game.enemy_projectiles.append(MiniFireball(x, random.randint(0,900), self.projectile_speed*p_dir, self.dmg_projectile, False))
+                game.enemy_projectiles.append(MiniFireball(x, 920/self.sidebarrage_cnt*n, self.projectile_speed*p_dir, self.dmg_projectile, False))
         elif self.attackmode == 2:
-            random = random.choice([1,2,3,4])
-            x = random.choice([300, 1600])
-            y = random.choice([300, 600, 700, 750, 800])
-            if random == 1:
-                game.enemylist.append(Bat(x, y, y, 200, 1600))
-            elif random == 2:
-                game.enemylist.append(TimeWraith(x, y, game.g, 200, 1600))
-            elif random == 3:
-                game.enemylist.append(TimeWizard(x, y, game.g, 200, 1600))
-            elif random == 4:
-                game.enemylist.append(Worm(x, y, game.g, 200, 1600))
-        self.attackmode = (self.attackmode+1)%3
+            for n in range(2):
+                rand_enemy = random.choice([1,2,3,4])
+                x = random.choice([300, 1600])
+                y = random.choice([300, 600, 700, 750, 800])
+                if rand_enemy == 1:
+                    game.enemylist.append(Bat(x, y, y, 200, 1600))
+                elif rand_enemy == 2:
+                    game.enemylist.append(TimeWraith(x, y, game.g, 200, 1600))
+                elif rand_enemy == 3:
+                    game.enemylist.append(TimeWizard(x, y, game.g, 200, 1600))
+                elif rand_enemy == 4:
+                    game.enemylist.append(Worm(x, y, game.g, 200, 1600))
+        elif self.attackmode == 3:
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y, 3.5, self.dmg_projectile, True))
+            game.enemy_projectiles.append(BigClock(self.x, self.y, 3.5, self.dmg_projectile, False))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y, -3.5, self.dmg_projectile, True))
+            game.enemy_projectiles.append(BigClock(self.x+self.w, self.y, -3.5, self.dmg_projectile, False))
+        self.attackmode = (self.attackmode+1)%4
 
 
 class Projectile(Creation):
@@ -1001,8 +1007,8 @@ class Projectile(Creation):
             game.hero_projectiles.remove(self)
 
 class ClockProjectile(Projectile):
-    def __init__(self, x, y, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -2, 150, True, dmg)
+    def __init__(self, x, y, projectile_speed, dmg, gravity=True):
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -2, 150, gravity, dmg)
 
 class SmallFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
@@ -1010,7 +1016,7 @@ class SmallFireball(Projectile):
 
 class MiniFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
-        Projectile.__init__(self, x, y, 19, 16, "minifireball.png", 19, 16, 3, projectile_speed, 0, 300, gravity, dmg)
+        Projectile.__init__(self, x, y, 19, 16, "minifireball.png", 19, 16, 3, projectile_speed, 0, 250, gravity, dmg)
 
 class BatBall(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
@@ -1018,7 +1024,7 @@ class BatBall(Projectile):
 
 class BigClock(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
-        Projectile.__init__(self, x, y, 64, 64, "bigclock.png", 64, 64, 6, projectile_speed, 0, 150, gravity, dmg)
+        Projectile.__init__(self, x, y, 64, 64, "bigclock.png", 64, 64, 5, projectile_speed, 0, 350, gravity, dmg)
 
 class Item(Creation):
 

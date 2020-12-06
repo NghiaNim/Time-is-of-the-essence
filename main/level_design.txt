@@ -1,7 +1,6 @@
 Sound,first_levels
 #An empty line is used to separate levels
 #possible tutorial here
-Boss,200,700,920,100,1000
 
 BuffItem,500,800,4
 Worm,900,800,920,100,1900
@@ -49,6 +48,8 @@ SmallWall,1400,880
 Platform,880,770
 ShortPlatform,1150,700
 LongPlatform,1200,620
+
+Boss,950,800,920,200,1700
 
 Sound,end_sound
 end
