@@ -284,6 +284,9 @@ class Hero(Creation):
                 self.y = self.standing_y + self.standing_h/2
                 self.h = self.standing_h/2
             else:
+                if self.key_handler['Q'] == True and self.autofire == True:
+                    self.attack()
+            
                 self.y = self.standing_y
                 self.h = self.standing_h
                 
@@ -301,11 +304,6 @@ class Hero(Creation):
 
             if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
                 self.special_ability()
-
-            if self.key_handler['Q'] == True:
-                self.attack()
-            self.key_handler['Q'] = False
-            
 
 
         
@@ -993,7 +991,7 @@ def keyPressed():
         game.hero.key_handler[UP] = True
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = True 
-    elif (key == 'Q' or key == 'q') and game.hero.autofire:
+    elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = True
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = True
@@ -1012,8 +1010,10 @@ def keyReleased():
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = False
-    elif (key == 'Q' or key == 'q') and game.hero.reloadtime == 0:
-        game.hero.key_handler['Q'] = True
+    elif (key == 'Q' or key == 'q'):
+        game.hero.key_handler['Q'] = False
+        if game.hero.reloadtime == 0:
+            game.hero.attack()
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = False
         
