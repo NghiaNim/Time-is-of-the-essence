@@ -1091,27 +1091,27 @@ def drawMenu_2():
 
     fill(0,68,129)
     textSize(70)
-    text('CHARACTER SELECT', 100, 150)
+    text('CHARACTER SELECT', 200, 150)
 
     fill(255,255,255)
-    text('Jack', 200, 370)
+    text('McMillian Sondai\'el', 200, 370)
 
-    text('Jill', 200, 570)
+    text('Jody Howar Glas', 200, 570)
 
-    text('John', 200, 770)
+    text('Peterpen Julumn', 200, 770)
 
-    if 100<=mouseX<=400 and 300<=mouseY<=400:
+    if 100<=mouseX<=850 and 300<=mouseY<=400:
         fill(0,255,0)
-        text('Jack', 200, 370)
+        text('McMillian Sondai\'el', 200, 370)
         
     
-    elif 100<=mouseX<=400 and 500<=mouseY<=600:
+    elif 100<=mouseX<=760 and 500<=mouseY<=600:
         fill(0,255,0)
-        text('Jill', 200, 570)
+        text('Jody Howar Glas', 200, 570)
     
-    elif 100<=mouseX<=400 and 700<=mouseY<=800:
+    elif 100<=mouseX<=760 and 700<=mouseY<=800:
         fill(0,255,0)
-        text('John', 200, 770)
+        text('Peterpen Julumn', 200, 770)
 
 
     pass
@@ -1242,19 +1242,19 @@ def mousePressed():
         gameScreen = 1
 
     #Choose Jack
-    elif gameScreen == 1 and 100<=mouseX<=400 and 300<=mouseY<=400:
+    elif gameScreen == 1 and 100<=mouseX<=850 and 300<=mouseY<=400:
         hero = 'Jack'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
         gameScreen = 2
     #Choose Jill
-    elif gameScreen == 1 and 100<=mouseX<=400 and 500<=mouseY<=600:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 500<=mouseY<=600:
         hero = 'Jill'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
         gameScreen = 2
     #Choose John
-    elif gameScreen == 1 and 100<=mouseX<=400 and 700<=mouseY<=800:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 700<=mouseY<=800:
         hero = 'John'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)        
