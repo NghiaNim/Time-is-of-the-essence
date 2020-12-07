@@ -13,24 +13,27 @@ main_theme = player.loadFile(path + "/Sound/main_theme.mp3")
 main_theme.rewind()
 main_theme.loop()
 
+
+### The one class to contain them all ###
 class Game:
     def __init__(self, w, h, g, hero):
-        self.w = w
-        self.h = h
-        self.enemy_projectiles = []
-        self.hero_projectiles = []
-        self.enemylist = []
-        self.itemlist = []
-        self.platformlist = []
-        self.obstaclelist = []
-        self.g = g
+        self.w = w # Width
+        self.h = h # Height
+        self.enemy_projectiles = [] # List of enemy projectiles
+        self.hero_projectiles = [] # List of hero projectiles
+        self.enemylist = [] # List of enemies
+        self.itemlist = [] # List of items
+        self.platformlist = [] # List of platfroms
+        self.obstaclelist = [] # List of obstacles
+        self.g = g # Ground level
+
         self.next_level = False
         self.background = loadImage(path + "/images/background.png")
         self.groundimg = loadImage(path + "/images/ground.png")
         self.freeze_lenght = 240 # Duration of freeze in frames
-        self.frozen = False 
+        self.frozen = False
         
-        for line in level:
+        for line in level: # Text-file based level builder
             if line == '\n':
                 break
             
@@ -113,11 +116,11 @@ class Game:
                     random_cor = random.randint(120, 1800)
             self.enemylist.append(Portal(random_cor, self.g - 120, 120, 120))
 
-        if self.frozen == True and frameCount - self.freezeStart > self.freeze_lenght:
+        if self.frozen == True and frameCount - self.freezeStart > self.freeze_lenght: # Defreeze enemies after the duration has passed
             self.defreeze_enemies()
 
     
-    def display(self):
+    def display(self): # Display all element in the game
         self.update()
         fill(0,0,0)
         stroke(0,0,0)
@@ -141,19 +144,21 @@ class Game:
             p.display()
 
 
-    def freeze_enemies(self):
+    def freeze_enemies(self): # Causes enemies to freeze
 
         for e in self.enemylist:
             e.freeze = True
-        self.freezeStart = frameCount
+        self.freezeStart = frameCount # Makes framestamp of when it happened
         self.frozen = True
 
-    def defreeze_enemies(self):
+    def defreeze_enemies(self): # Enemie defreeze
 
         for e in self.enemylist:
             e.freeze = False
         self.frozen = False
-        
+
+
+### Mother of all classes - CREATION ###        
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
         self.x = x
@@ -177,21 +182,21 @@ class Creation:
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
-
-        changedg = False
+        # Changes the ground level if above platfrom or wall, bit more complex due to the bug 
+        changedg = False # registers if the ground should (and have) changed
         if len(game.obstaclelist) != 0:
-            for o in game.obstaclelist:
+            for o in game.obstaclelist: # If above obstacle
                 if self.y + self.h <= o.y and ((self.x + self.w >= o.x and self.x + self.w <= o.x + o.w) or (self.x <= o.x + o.w and self.x >= o.x)) or ((2*self.x+self.w)/2 <= o.x + o.w and (2*self.x+self.w)/2 >= o.x)  :
                     self.g = o.y
                     changedg = True
                     break
-        if len(game.platformlist) != 0:
+        if len(game.platformlist) != 0: # If above platform
             for p in game.platformlist:
                 if self.y + self.h <= p.y and self.x + self.w >= p.x and self.x <= p.x + p.w:
                     self.g = p.y
                     changedg = True
                     break
-        if changedg == False:
+        if changedg == False: # If none is detected set the ground to the game ground
             self.g = game.g
                 
     def update(self):
@@ -205,20 +210,21 @@ class Creation:
         self.y += self.vy
 
 
-    # Simple collision detection, doesn't check for side (needed for enemies class)
+    # Simple collision detection, doesn't check for side used for simple collisions
     def collision_rect(self, target):
         if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
             return True
         else:
             return False
 
+    # Collision that would occur if the creation moves
     def collision_future(self, target):
         if (self.x + self.vx < target.x + target.w) and (self.x + self.w + self.vx > target.x) and (self.y + self.vy < target.y + target.h) and (self.y + self.vy + self.h > target.y):
             return True
         else:
             return False
 
-    # Collision detection based on rectangle corner distances/overlapping
+    # Collision detection based on rectangle corner distances/overlapping detecting the side as well
     def collision_rect_right(self, target):
         if target.x < self.x < target.x + target.w and (self.y < target.y + target.h) and (self.y + self.h > target.y):
             return True
@@ -232,14 +238,14 @@ class Creation:
             return False
 
         
-    def display(self):
+    def display(self): # Basic display method
         self.update()       
         if self.direction == RIGHT:
             image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
         elif self.direction == LEFT:
             image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
 
-
+### Hero Class ###
 class Hero(Creation):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, time, dmg, speed):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
@@ -599,7 +605,7 @@ class Hero(Creation):
         self.speed = self.base_speed * 1.5
         self.active_speed += time
 
-
+### Predefined heroes ###
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 8
@@ -674,6 +680,7 @@ class John(Hero):
         self.real_active_ability_cooldown = self.active_ability_cooldown 
         pass
 
+### The base enemy class ###
 class Enemy(Creation):
 
     def __init__(self, x, y, w, h, g, img_name, img_name_idle, img_name_death, img_w, img_h, num_frames, num_idle_frames, num_death_frames, attack_frame, aspd, xl, xr, hp, vx, dmg_projectile, dmg_collision, attack_count, droprate, follow=False, p_gravity=False, followdistance=0):
@@ -705,6 +712,7 @@ class Enemy(Creation):
         self.droprate = droprate
         self.attack_count = attack_count
         self.attacked_cnt = 0 #records the series of attacks
+        self.time_buff = 15 # Time buff for the time item
         # Attributes for backend functions
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
@@ -725,18 +733,18 @@ class Enemy(Creation):
             self.gravity()
 
 
-            # Idle and attack loop (enemy will stop walking so he can attack)
+            # Idle and attack loop (enemy will stop walking so he can attack), won't trigger when the enemy is frozen
             if self.freeze == False:
-                if frameCount - self.framestart > self.attackspeed:
+                if frameCount - self.framestart > self.attackspeed: # Checks for attack cooldown
                     if self.idle == False:
-                        self.tmp_vx = self.vx
+                        self.tmp_vx = self.vx #stores the vx value
                         self.vx = 0
                         self.idle = True
                     if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
                         if self.projectile_bol == True: #Does the enemy shoot projectiles?
                             self.attack()
-                        self.attacked_cnt += 1       
-                    if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
+                        self.attacked_cnt += 1 # Counter for how many attacks were made   
+                    if self.idle_frame == 0 and self.attacked_cnt == self.attack_count: # If the animation finished its loop and the enemy made enough attacks resume walking
                         self.framestart = frameCount
                         self.vx = self.tmp_vx
                         self.idle = False
@@ -746,7 +754,7 @@ class Enemy(Creation):
             if self.follow_bol == True:
                 self.follow()
 
-            # Checks for the "boundaries"
+            # Checks for the "boundaries", if the next step shall make move it outside the boundary turn around
             if self.x+self.vx < self.xleft:
                 self.vx *= -1
                 self.direction = RIGHT
@@ -756,7 +764,7 @@ class Enemy(Creation):
 
             # Check for obstacles
             for o in game.obstaclelist:
-                # This will check whether the next "step" will be within the obstacle,
+                # This will check whether the next "step" will be within the obstacle, if so, turn around
                 if (self.x + self.vx >= o.x and self.x + self.vx <= o.x + o.w) or (self.x + self.w + self.vx >= o.x and self.x+self.w + self.vx <= o.x + o.w) and ((self.y>=o.y and self.y<=o.y+o.h) or (self.y+self.h >= o.y and self.y+self.h <= o.y+o.h)):
                     self.vx *= -1
                     if self.direction == LEFT:
@@ -767,8 +775,8 @@ class Enemy(Creation):
             # Collision with projectiles
             for p in game.hero_projectiles:
                 if self.collision_rect_left(p) == True:
-                    self.damage(p.dmg, LEFT)
-                    p.destroy()
+                    self.damage(p.dmg, LEFT) # Cause damage to self
+                    p.destroy() # Destroy the projectile
                 elif self.collision_rect_right(p) == True:
                     self.damage(p.dmg, RIGHT)
                     p.destroy()
@@ -783,46 +791,46 @@ class Enemy(Creation):
                 self.idle_frame = 0
                 self.idle_count = 0
 
-            if self.hp <= 0:
+            if self.hp <= 0: # If the HP falls below zero, trigger death animation and turn of some behaviour (e.g. collision)
                 self.death()
 
             if self.freeze == False:
                 self.x += self.vx
                 self.y += self.vy
 
-        elif self.alive == False:
+        elif self.alive == False: # Cause death animation and self-removal
             if frameCount%10 == 0:
                 self.death_frame = self.death_frame + 1
-                if self.death_frame >= self.num_death_frames:
+                if self.death_frame >= self.num_death_frames: # has the aniamation completed?
                     self.destroy()
 
     def display(self):
         self.update() 
         #rect(self.x, self.y, self.w, self.h)
         if self.alive == True:      
-            if self.vx != 0 and self.direction == RIGHT:
+            if self.vx != 0 and self.direction == RIGHT: # Walking animation
                 image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
             elif self.vx != 0 and self.direction == LEFT:
                 image(self.img, self.x, self.y, self.img_w, self.img_h, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
-            elif self.vx == 0 and self.direction == RIGHT:
+            elif self.vx == 0 and self.direction == RIGHT: # Idle animation
                 image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
             elif self.vx == 0 and self.direction == LEFT:
                 image(self.img_idle, self.x, self.y, self.img_w, self.img_h, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
-        elif self.alive == False:
+        elif self.alive == False: #Death animation
             if self.direction == RIGHT:
                 image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
             if self.direction == LEFT:
                 image(self.img_death, self.x, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
 
-    # Here we will be able to define the specifics of attacks 
+    # This is default projectile attack, though this one is used mainly in developement stage 
     def attack(self):
         if self.direction == LEFT:
             game.enemy_projectiles.append(Projectile(self.x, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed*-1, -6, 150, self.p_gravity, self.dmg_projectile))
         elif self.direction == RIGHT:
             game.enemy_projectiles.append(Projectile(self.x+self.w, self.y+25, 15, 15, "clock.png", 15, 15, 4, self.projectile_speed, -6, 150, self.p_gravity, self.dmg_projectile))
     
-    def follow(self):
+    def follow(self): # This will detect where the hero (which side) is and change the direction of the enemy accordingly
 
         if ((game.hero.x - self.x)**2 + (game.hero.y - self.y)**2)**0.5 < self.followdistance: # Is the enemy in the follow distance?
             if game.hero.x < self.x: # Is the enemy to the left?
@@ -842,28 +850,28 @@ class Enemy(Creation):
             pass
 
 
-    def death(self):
+    def death(self): # Simply changes the boolean upon which other conditions depend
         self.alive = False
 
-    def damage(self, dmg, dir): 
+    def damage(self, dmg, dir): #Knockback and self-damage implication, theoretical knockback to the sides if desirable, but without it the game is harder which is desirable
         self.vy -= 3
         self.hp -= dmg
 
-    def destroy(self):
+    def destroy(self): # Trigger self-removal form the enemy list and potentially cause an item to drop
         rand_int = random.randint(0,100)
         if rand_int < self.droprate:
             rand_int2 = random.choice([0,1])
             if rand_int2 == 0:
-                game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
+                game.itemlist.append(TimeItem(self.x, self.y, self.g, self.time_buff)) #Time Item
             elif rand_int2 == 1:
-                game.itemlist.append(BuffItem(self.x, self.y, self.g))
+                game.itemlist.append(BuffItem(self.x, self.y, self.g)) # Random buff item
         game.enemylist.remove(self)
 
-class TimeWraith(Enemy):
+class TimeWraith(Enemy): # Predefined enemy - Wraith
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 70, 2.5, 10, 5.5, 2, 50, True, False, 100)
 
-    def attack(self):
+    def attack(self): #Wraith unique attack
         if self.direction == LEFT:
             game.enemy_projectiles.append(ClockProjectile(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile))
         elif self.direction == RIGHT:
@@ -887,17 +895,17 @@ class TimeWraith(Enemy):
             if self.direction == LEFT:
                 image(self.img_death, self.x-14, self.y, self.img_w, self.img_h, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
-class Worm(Enemy):
+class Worm(Enemy): # Predefined enemy - Worm, or snail, whichever makes you happier
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 70, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
-class TimeWizard(Enemy):
+class TimeWizard(Enemy): # Predefined enemy - Time Wizard, probably biggest PITA
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 70, False, False, 100)
         self.projectile_speed = 7 # VX attribute of the casted projectile
 
-    def display(self):
+    def display(self): # Again hitbox didn't match the sprite and yada yada, this this fixes the image display
         self.update()
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
@@ -914,11 +922,11 @@ class TimeWizard(Enemy):
             if self.direction == LEFT:
                 image(self.img_death, self.x-50, self.y-80, self.img_w//2, self.img_h//2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
-    def attack(self):
+    def attack(self): # TimeWizard specific attack
             game.enemy_projectiles.append(SmallFireball(self.x, self.y+5, -self.projectile_speed, self.dmg_projectile, self.p_gravity))
             game.enemy_projectiles.append(SmallFireball(self.x+self.w, self.y+5, self.projectile_speed, self.dmg_projectile, self.p_gravity))
 
-class Bat(Enemy):
+class Bat(Enemy): # A flying enemy!
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 70, False, True, 100)
         self.flying = True
@@ -927,7 +935,7 @@ class Bat(Enemy):
     def attack(self):
             game.enemy_projectiles.append(BatBall(self.x, self.y, 0, self.dmg_projectile, self.p_gravity))
 
-    def gravity(self):
+    def gravity(self): # Customized gravity, without check for platforms and walls
         if self.y + self.h >= self.g:
             self.vy = 0
         else:
@@ -935,14 +943,14 @@ class Bat(Enemy):
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
-class Reaper(Enemy):
+class Reaper(Enemy): # The boss, the one and only, or until we add another
     def __init__(self, x, y, g, x_left, x_right):
         Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 300, 3, 10, 5.5, 1, 100, False, False, 100)
-        self.attackmode = 0
-        self.barrage_cnt = 13
-        self.sidebarrage_cnt = 40
+        self.attackmode = 0 # Yes! He has multiple attack modes :)
+        self.barrage_cnt = 13 # Number of projectiles
+        self.sidebarrage_cnt = 40 # Number of projectiles
 
-    def display(self):
+    def display(self): # It is hard to find the perfect sprite
         self.update()
         if self.alive == True:      
             if self.vx != 0 and self.direction == RIGHT:
@@ -959,6 +967,7 @@ class Reaper(Enemy):
             if self.direction == LEFT:
                 image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
 
+        # Health bar
         stroke(0)
         fill(255,255,255)
         textSize(25)
@@ -970,18 +979,18 @@ class Reaper(Enemy):
         rect(300,80,self.hp*5, 25)
 
     def attack(self):
-        if self.attackmode == 0:
-            for n in range(self.barrage_cnt):
+        if self.attackmode == 0: # Different attack per mode
+            for n in range(self.barrage_cnt): # Projectiles rain from the above!
                 game.enemy_projectiles.append(BigClock((1920/self.barrage_cnt*n)-64, random.randint(0,200), 0, self.dmg_projectile, True))
         elif self.attackmode == 1:
-            for n in range(self.sidebarrage_cnt):
+            for n in range(self.sidebarrage_cnt): # Projectiles rain from the sides?
                 x = random.choice([0, 1920])
                 if x == 0:
                     p_dir = 1
                 else:
                     p_dir = -1
                 game.enemy_projectiles.append(MiniFireball(x, 920/self.sidebarrage_cnt*n, self.projectile_speed*p_dir, self.dmg_projectile, False))
-        elif self.attackmode == 2:
+        elif self.attackmode == 2: # Enemies rain at oddly specfic locations
             for n in range(2):
                 rand_enemy = random.choice([1,2,3,4])
                 x = random.choice([300, 1600])
@@ -994,14 +1003,14 @@ class Reaper(Enemy):
                     game.enemylist.append(TimeWizard(x, y, game.g, 200, 1600))
                 elif rand_enemy == 4:
                     game.enemylist.append(Worm(x, y, game.g, 200, 1600))
-        elif self.attackmode == 3:
+        elif self.attackmode == 3: # Simple projectile attack
             game.enemy_projectiles.append(ClockProjectile(self.x, self.y, 3.5, self.dmg_projectile, True))
             game.enemy_projectiles.append(BigClock(self.x, self.y, 3.5, self.dmg_projectile, False))
             game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y, -3.5, self.dmg_projectile, True))
             game.enemy_projectiles.append(BigClock(self.x+self.w, self.y, -3.5, self.dmg_projectile, False))
-        self.attackmode = (self.attackmode+1)%4
+        self.attackmode = (self.attackmode+1)%4 # Attack mode alternator
 
-
+### Projectile class ###
 class Projectile(Creation):
 
     def __init__(self, x, y, w, h, img_name, img_w, img_h, num_frames, vx, vy, framespan, gravity, dmg):
@@ -1013,7 +1022,7 @@ class Projectile(Creation):
         self.gravitycheck = gravity # Should gravity apply? T/F
         self.dmg = dmg # How much damage should this projectile cause?
 
-        if self.vx > 0:
+        if self.vx > 0: # Detects the direction
             self.direction = RIGHT
         else:
             self.direction = LEFT 
@@ -1044,16 +1053,17 @@ class Projectile(Creation):
         if frameCount - self.framestart > self.framespan:
             self.destroy()
 
-        if self.y+self.h > game.g:
+        if self.y+self.h > game.g: # If the projectiles hits the ground, it shall perish
             self.destroy()
 
-    def destroy(self):
+    def destroy(self): # Plain projectile self-removal
 
         if self in game.enemy_projectiles:
             game.enemy_projectiles.remove(self)
         elif self in game.hero_projectiles:
             game.hero_projectiles.remove(self)
 
+#### Predefined projectiles ####
 class ClockProjectile(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity=True):
         Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -2, 150, gravity, dmg)
@@ -1074,17 +1084,18 @@ class BigClock(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
         Projectile.__init__(self, x, y, 64, 64, "bigclock.png", 64, 64, 5, projectile_speed, 0, 350, gravity, dmg)
 
+### Item Class ###
 class Item(Creation):
 
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, autopick):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.autopick = autopick
-        self.direction = RIGHT #This should be an attribute whether the item is going to be autopicked, but we could theoretically remove it whatsoever
+        self.autopick = autopick # possible change if we decide to make non-autopickable items
+        self.direction = RIGHT #Just so that the image displayment works
 
-    def destroy(self):
+    def destroy(self): # Easy self removal
         game.itemlist.remove(self)
 
-class TimeItem(Item):
+class TimeItem(Item): # Adds time to the hero
 
     def __init__(self, x, y, g, time):
         Item.__init__(self, x, y, 32, 32, g, "clockitem.png", 32, 32, 6, True)
@@ -1098,7 +1109,7 @@ class TimeItem(Item):
             game.hero.time += self.time
             self.destroy()
 
-class BuffItem(Item):
+class BuffItem(Item): # Various buffs for the hero
     def __init__(self, x, y, g, effect = random.randint(1,5)):
         if effect == 1:
             self.item = 'Apple'
@@ -1149,7 +1160,8 @@ class BuffItem(Item):
 
             self.destroy()
 
-class Obstacle(Creation):
+### Obstacle class which doesn't allow enemies and heroes to pass, changes ground level and consumes projectiles ###
+class Obstacle(Creation): 
 
     def __init__(self, x, y, w, h, img_name, img_w, img_h):
         self.x = x
@@ -1195,6 +1207,7 @@ class LongPlatform(Obstacle):
     def __init__(self, x, y):
         Obstacle.__init__(self, x, y, 448, 30, "longplatform.png", 448, 30)
 
+### Portal to next "level"
 class Portal(Creation):
     def __init__(self, x, y, w, h):
         self.x = x
@@ -1222,7 +1235,7 @@ class Portal(Creation):
         image(self.img, self.x, self.y, self.w, self.h)
 
     
-            
+### Menu ###           
 def drawMenu_1():
     img = loadImage(path + "/images/main_menu.jpg")
     image(img,0,0)
@@ -1323,7 +1336,7 @@ def drawControl():
 
 
 
-
+### End screen ###
 def drawEnd():
     end_img = loadImage(path + "/images/end_menu.jpg")
     image(end_img,0,0)
@@ -1352,7 +1365,7 @@ def draw():
     elif gameScreen == 'help':
         drawControl()
     
-
+### Key & Mouse-click Handlers ###
 def keyPressed():
     global gameScreen, main_theme
     if keyCode == LEFT:
@@ -1375,9 +1388,6 @@ def keyPressed():
         main_theme.rewind()
         main_theme.loop()
         gameScreen = 1
-
-
-
         
 def keyReleased():
     if keyCode == LEFT:
