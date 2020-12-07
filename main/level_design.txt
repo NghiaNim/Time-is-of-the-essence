@@ -3,6 +3,7 @@ Sound,first_levels
 #possible tutorial here
 
 BuffItem,500,800,4
+BuffItem,400,800,3
 Worm,900,800,920,100,1900
 Worm,1800,800,920,100,1900
 Wall,1200,840

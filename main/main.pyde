@@ -261,6 +261,8 @@ class Hero(Creation):
         self.reloadtime = 0
 
         self.time = time
+        self.freeze = False
+        self.freeze_time = 0
 
         self.buffed_time = 0
 
@@ -320,8 +322,13 @@ class Hero(Creation):
 
 
         self.gravity()
-        if frameCount % 60 == 0:
-            self.time -= 1
+        if frameCount % 60 == 0 :
+            if not self.freeze:
+                self.time -= 1
+            else:
+                self.freeze_time -= 1
+                if self.freeze_time < 0:
+                    self.freeze = False
         
         if self.invincible < 0:
             self.hit_right = False
@@ -419,26 +426,26 @@ class Hero(Creation):
             elif isinstance(enemy, Portal):
                 continue
 
-            elif self.collision_rect_right(enemy) and self.invincible <= 0 and enemy.alive == True:
+            elif self.collision_rect_right(enemy) and self.invincible <= 0 and enemy.alive == True and not self.freeze:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
 
-            elif self.collision_rect_left(enemy) and self.invincible <= 0 and enemy.alive == True:
+            elif self.collision_rect_left(enemy) and self.invincible <= 0 and enemy.alive == True and not self.freeze:
                 self.time -= enemy.dmg
                 self.invincible = 60
                 self.knockback = True
 
         
         for projectile in game.enemy_projectiles:
-            if self.collision_rect_right(projectile) and self.invincible <= 0:
+            if self.collision_rect_right(projectile) and self.invincible <= 0 and not self.freeze:
                 projectile.destroy()
                 self.time -= projectile.dmg
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
-            elif self.collision_rect_left(projectile) and self.invincible <= 0:
+            elif self.collision_rect_left(projectile) and self.invincible <= 0 and not self.freeze:
                 projectile.destroy()
                 self.time -= projectile.dmg
                 self.invincible = 60
@@ -529,11 +536,15 @@ class Hero(Creation):
                 
         if self.gravityBullet == True:
             fill(0,255,0)
-            text('Gravity Bullets!', 400, 1060)
+            text('Heavy shots!', 400, 1060)
 
         if game.frozen == True:
             fill(0,255,0)
-            text('Enemies are frozen!', 550, 1060)
+            text('Enemies are frozen!', 600, 1030)
+
+        if game.hero.freeze == True:
+            fill(0,255,0)
+            text('Invincibility!', 600, 1060)
 
 
 
@@ -1110,8 +1121,10 @@ class BuffItem(Item):
                 game.hero.autofiretime = 10 
                 pass 
                     
-            #time freeze
+            #time stands (or basically can't take damage)
             elif self.item == 'Melon':
+                game.hero.freeze = True
+                game.hero.freeze_time = 7
                 pass
                 
             #gravity bullet
@@ -1120,6 +1133,7 @@ class BuffItem(Item):
                 game.hero.gravityTime = 10
                 pass
 
+            #time freeze
             elif self.item  == 'Pineapple':
                 game.freeze_enemies()
 
