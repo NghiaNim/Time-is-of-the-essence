@@ -49,5 +49,7 @@ Platform,880,770
 ShortPlatform,1150,700
 LongPlatform,1200,620
 
+Boss,950,800,920,200,1700
+
 Sound,end_sound
 end
