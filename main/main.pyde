@@ -1088,7 +1088,7 @@ class BuffItem(Item):
         elif effect == 4:
             self.item = 'Orange'
         elif effect == 5:
-            self.item = 'placeholder'
+            self.item = 'Pineapple'
             
         Item.__init__(self, x, y, 32, 32, g, self.item + ".png", 32, 32, 17, True)
 
@@ -1120,7 +1120,7 @@ class BuffItem(Item):
                 game.hero.gravityTime = 10
                 pass
 
-            elif self.item  == 'placeholder':
+            elif self.item  == 'Pineapple':
                 game.freeze_enemies()
 
             self.destroy()
