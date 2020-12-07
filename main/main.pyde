@@ -27,6 +27,8 @@ class Game:
         self.next_level = False
         self.background = loadImage(path + "/images/background.png")
         self.groundimg = loadImage(path + "/images/ground.png")
+        self.freeze_lenght = 240 # Duration of freeze in frames
+        self.frozen = False 
         
         for line in level:
             if line == '\n':
@@ -111,6 +113,9 @@ class Game:
                     random_cor = random.randint(120, 1800)
             self.enemylist.append(Portal(random_cor, self.g - 120, 120, 120))
 
+        if self.frozen == True and frameCount - self.freezeStart > self.freeze_lenght:
+            self.defreeze_enemies()
+
     
     def display(self):
         self.update()
@@ -119,11 +124,11 @@ class Game:
         rect(0,self.g,WIDTH,HEIGHT)
         image(self.background, 0, 0)
         image(self.groundimg,0, 0)
-        for e in self.enemylist:
-            e.display()
 
         self.hero.display()
-        
+
+        for e in self.enemylist:
+            e.display()
         for p in self.enemy_projectiles:
             p.display()
         for p in self.hero_projectiles:
@@ -134,6 +139,20 @@ class Game:
             o.display()
         for p in self.platformlist:
             p.display()
+
+
+    def freeze_enemies(self):
+
+        for e in self.enemylist:
+            e.freeze = True
+        self.freezeStart = frameCount
+        self.frozen = True
+
+    def defreeze_enemies(self):
+
+        for e in self.enemylist:
+            e.freeze = False
+        self.frozen = False
         
 class Creation:
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames):
@@ -496,7 +515,7 @@ class Hero(Creation):
 
         if self.reloadtime != 0:
             fill(255,255,255)
-            text('Recharging...', 100, 1000)
+            text('Reloading...', 100, 1000)
 
         if self.autofire == True:
             fill(0,255,0)
@@ -511,6 +530,10 @@ class Hero(Creation):
         if self.gravityBullet == True:
             fill(0,255,0)
             text('Gravity Bullets!', 400, 1060)
+
+        if game.frozen == True:
+            fill(0,255,0)
+            text('Enemies are frozen!', 550, 1060)
 
 
 
@@ -675,6 +698,7 @@ class Enemy(Creation):
         self.framestart = frameCount 
         self.direction = random.choice([LEFT, RIGHT])
         self.flying = False
+        self.freeze = False
         
         self.vx = vx
         if self.direction == LEFT:
@@ -684,26 +708,28 @@ class Enemy(Creation):
         self.tmp_vx = 0
         
 
+
     def update(self):
         if self.alive == True:
             self.gravity()
 
 
             # Idle and attack loop (enemy will stop walking so he can attack)
-            if frameCount - self.framestart > self.attackspeed:
-                if self.idle == False:
-                    self.tmp_vx = self.vx
-                    self.vx = 0
-                    self.idle = True
-                if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
-                    if self.projectile_bol == True: #Does the enemy shoot projectiles?
-                        self.attack()
-                    self.attacked_cnt += 1       
-                if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
-                    self.framestart = frameCount
-                    self.vx = self.tmp_vx
-                    self.idle = False
-                    self.attacked_cnt = 0
+            if self.freeze == False:
+                if frameCount - self.framestart > self.attackspeed:
+                    if self.idle == False:
+                        self.tmp_vx = self.vx
+                        self.vx = 0
+                        self.idle = True
+                    if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
+                        if self.projectile_bol == True: #Does the enemy shoot projectiles?
+                            self.attack()
+                        self.attacked_cnt += 1       
+                    if self.idle_frame == 0 and self.attacked_cnt == self.attack_count:
+                        self.framestart = frameCount
+                        self.vx = self.tmp_vx
+                        self.idle = False
+                        self.attacked_cnt = 0
             
             # If the enemy should follow the hero this will change its direction
             if self.follow_bol == True:
@@ -749,8 +775,9 @@ class Enemy(Creation):
             if self.hp <= 0:
                 self.death()
 
-            self.x += self.vx
-            self.y += self.vy
+            if self.freeze == False:
+                self.x += self.vx
+                self.y += self.vy
 
         elif self.alive == False:
             if frameCount%10 == 0:
@@ -1051,7 +1078,7 @@ class TimeItem(Item):
             self.destroy()
 
 class BuffItem(Item):
-    def __init__(self, x, y, g, effect = random.randint(1,4)):
+    def __init__(self, x, y, g, effect = random.randint(1,5)):
         if effect == 1:
             self.item = 'Apple'
         elif effect == 2:
@@ -1060,6 +1087,8 @@ class BuffItem(Item):
             self.item = 'Melon'
         elif effect == 4:
             self.item = 'Orange'
+        elif effect == 5:
+            self.item = 'placeholder'
             
         Item.__init__(self, x, y, 32, 32, g, self.item + ".png", 32, 32, 17, True)
 
@@ -1090,7 +1119,10 @@ class BuffItem(Item):
                 game.hero.gravityBullet = True
                 game.hero.gravityTime = 10
                 pass
-        
+
+            elif self.item  == 'placeholder':
+                game.freeze_enemies()
+
             self.destroy()
 
 class Obstacle(Creation):
