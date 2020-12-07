@@ -100,9 +100,9 @@ class Game:
         if hero == 'Jack':
             self.hero = Jack(100, 752, 30, 48, self.g, 'SteamMan_run.png', 48, 48, 6, 'SteamMan_idle.png', 4, 'SteamMan_hurt.png', 3, 'SteamMan_jump.png', 6, 10, 4)
         elif hero == 'Jill':
-            self.hero = Jill(100, 752, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 20, 6)
+            self.hero = Jill(100, 752, 30, 48, self.g, 'GraveRobber_run.png', 48, 48, 6, 'GraveRobber_idle.png', 4, 'GraveRobber_hurt.png', 3, 'GraveRobber_jump.png', 6, 17, 6)
         elif hero == 'John':
-            self.hero = John(100, 752, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 10, 5)
+            self.hero = John(100, 752, 30, 48, self.g, 'Woodcutter_run.png', 48, 48, 6, 'Woodcutter_idle.png', 4, 'Woodcutter_hurt.png', 3, 'Woodcutter_jump.png', 6, 12, 5)
     
     def update(self):
         
@@ -127,11 +127,12 @@ class Game:
         rect(0,self.g,WIDTH,HEIGHT)
         image(self.background, 0, 0)
         image(self.groundimg,0, 0)
-
-        self.hero.display()
-
+        
         for e in self.enemylist:
             e.display()
+            
+        self.hero.display()
+
         for p in self.enemy_projectiles:
             p.display()
         for p in self.hero_projectiles:
@@ -367,7 +368,7 @@ class Hero(Creation):
                 self.knockback = False
                 
             if self.key_handler['Q'] == True and self.autofire == True:
-                    self.attack()
+                self.attack()
                     
             if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
                 self.vx = 0
@@ -422,6 +423,14 @@ class Hero(Creation):
         elif frameCount%10 == 0 and self.vx != 0 and self.vy == 0:
             self.frame = (self.frame + 1) % self.num_frames
 
+        #chance to dodge attack
+        if isinstance(self, Jill):
+            temp = random.randint(1,8)
+        elif isinstance(self, Jack):
+            temp = random.randint(1,4)
+        elif isinstance(self,John):
+            temp = random.randint(1,13)
+
         #check for hit
         for enemy in game.enemylist:
             
@@ -433,13 +442,15 @@ class Hero(Creation):
                 continue
 
             elif self.collision_rect_right(enemy) and self.invincible <= 0 and enemy.alive == True and not self.freeze:
-                self.time -= enemy.dmg
+                if temp != 1:
+                    self.time -= int(enemy.dmg - self.armor)
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
 
             elif self.collision_rect_left(enemy) and self.invincible <= 0 and enemy.alive == True and not self.freeze:
-                self.time -= enemy.dmg
+                if temp != 1:
+                    self.time -= int(enemy.dmg - self.armor)
                 self.invincible = 60
                 self.knockback = True
 
@@ -447,13 +458,16 @@ class Hero(Creation):
         for projectile in game.enemy_projectiles:
             if self.collision_rect_right(projectile) and self.invincible <= 0 and not self.freeze:
                 projectile.destroy()
-                self.time -= projectile.dmg
+                if temp != 1:               
+                    self.time -= int(projectile.dmg - self.armor)
                 self.invincible = 60
                 self.hit_right = True
                 self.knockback = True
+
             elif self.collision_rect_left(projectile) and self.invincible <= 0 and not self.freeze:
                 projectile.destroy()
-                self.time -= projectile.dmg
+                if temp != 1:                
+                    self.time -= int(projectile.dmg - self.armor)
                 self.invincible = 60
                 self.knockback = True
 
@@ -574,7 +588,10 @@ class Hero(Creation):
             else:
                 p_vx = 0
             
-            
+        #Jill's passive
+        if isinstance(self, Jill) and self.time <= 10:
+            self.active_damage = 1
+
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
             if not self.autofire:
@@ -612,7 +629,8 @@ class Jack(Hero):
         self.base_shootingspeed = 20
         self.shootingspeed = self.base_shootingspeed
         
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 85, dmg, speed)
+        self.armor = 2
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
 
@@ -634,6 +652,7 @@ class Jill(Hero):
         self.shootingspeed = self.base_shootingspeed
 
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 45, dmg, speed)
+        self.armor = 0
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
 
@@ -656,13 +675,15 @@ class John(Hero):
         self.base_shootingspeed = 22
         self.shootingspeed = self.base_shootingspeed
         
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 105, dmg, speed)
+        self.armor = 4
         self.active_ability_time = 1
         self.active_ability_cooldown = 30
 
 
         
     def special_ability(self):
+
         #tank stomp
         stomp = self.dmg*3
         for enemy in game.enemylist:
@@ -1284,16 +1305,116 @@ def drawMenu_2():
     if 100<=mouseX<=850 and 300<=mouseY<=400:
         fill(0,255,0)
         text('McMillian Sondai\'el', 200, 370)
+
+        #description
+        fill(255,255,255)
+        textSize(25)
+        text('In the year 2092, robots have risen up to become the dominant', 1000, 350)
+        text('species on Earth. Despite their machine minds and machine', 1000, 380)
+        text('hearts, they too cannot escape the unstoppable grasp of time.', 1000, 410)
+        text('Robots too must work to buy oil and pay electricity bills', 1000, 440)
+        text('of course! McMillian is one such robot, and he is determined', 1000, 470)
+        text('once and for all to set the bill with time!', 1000, 500)
+        fill(220,20,30)
+        textSize(35)
+        text('Active ability: Blank', 1000, 570)
+        fill(255,255,255)
+        textSize(25)
+        text('Removes all enemies projectile',1000, 610)
+        fill(220,20,30)
+        textSize(35)
+        text('Passive ability: Robot armor', 1000, 670)
+        fill(255,255,255)
+        textSize(25)
+        text("Thanks to the advance of modern technology, and ol' reliable duct", 1000, 710)
+        text("tape, McMillian is equipped with the state of the art Model MXXI Steel", 1000, 740)
+        text("Back Hydro-powered X15600008 A46 B80 C1 (New Gen) D808 RGB-CMYK", 1000, 770)
+        text("Z00000P B-side RevolverZ RTX 300080 Cs306900TXT Pure-Bred Non-GMO", 1000, 800)
+        text("FFS SME SMB Wifi 80001.01 Nvidia AMD Intel@ Trade-marked Armor", 1000, 830)
+        text("This allows him to have a chance of absorbing hits and protect", 1000, 860)
+        text("his time! The armor is at least harder than paper so he can take", 1000, 890)
+        text("some hits and pack a punch!", 1000, 920)
+        fill(220,20,30)
+        textSize(35)
+        text('Description: High defense, medium damage,', 1000, 990)
+        text('as much time as a robot can have', 1000, 1030)
+
         
     
     elif 100<=mouseX<=760 and 500<=mouseY<=600:
         fill(0,255,0)
         text('Jody Howar Glas', 200, 570)
+
+        #description
+        fill(255,255,255)
+        textSize(25)
+        text('Born in one of the harshest place in the world, filled with dangerous,', 1000, 350)
+        text('cut-throat criminals who swindle, steal from others for their livelihood', 1000, 380)
+        text('(I\'m of course talking about New York City), Jody had grown up to be a ', 1000, 410)
+        text('very tough girl, who always carries with her her grandmother\'s cherished', 1000, 440)
+        text('blade. Her father was a typical businessman on WallStreet who died', 1000, 470)
+        text('because of overworking, and because of this, she could never spend time with', 1000, 500)
+        text('him. With a desire to take back those lost time, she goes on a quest to', 1000, 530)
+        text('kill Time!', 1000, 560)
+        fill(220,20,30)
+        textSize(35)
+        text('Active ability: Bezerk', 1000, 600)
+        fill(255,255,255)
+        textSize(25)
+        text('Daddy issues and years of neglect have made Jody\'s temper very short',1000, 640)
+        text('Gains double damage and double attackspeed on activation',1000, 670)
+        fill(220,20,30)
+        textSize(35)
+        text('Passive ability: Cursed blade', 1000, 730)
+        fill(255,255,255)
+        textSize(25)
+        text("Unknown to Jody herself, the blade she carries with her holds immense ", 1000, 770)
+        text("power, she can attack very fast with very high damage. Her movement ", 1000, 800)
+        text("speed is also high thanks to a combination of curse power from the blade,", 1000, 830)
+        text("her light weight, and years and years of running away from her emotional ", 1000, 860)
+        text("problems. In return for the blade's power, her time is very limited and ", 1000, 890)
+        text("she must always be on the attack to gain it back!", 1000, 920)
+        fill(220,20,30)
+        textSize(35)
+        text('Description: low defense, very high damage,', 1000, 960)
+        text('average attention span of a teenager for time', 1000, 1000)
     
-    elif 100<=mouseX<=760 and 700<=mouseY<=800:
+    elif 100<=mouseX<=760 and 700<=mouseY<=800:       
         fill(0,255,0)
         text('Peterpen Julumn', 200, 770)
-
+        
+        #description
+        fill(255,255,255)
+        textSize(25)
+        text('In the year 2092, robots have risen up to become the dominant', 1000, 350)
+        text('species on Earth. Despite their machine minds and machine', 1000, 380)
+        text('hearts, they too cannot escape the unstoppable grasp of time.', 1000, 410)
+        text('Robots too must work to buy oil and pay electricity bills', 1000, 440)
+        text('of course! McMillian is one such robot, and he is determined', 1000, 470)
+        text('once and for all to set the bill with time!', 1000, 500)
+        fill(220,20,30)
+        textSize(35)
+        text('Active ability: Blank', 1000, 570)
+        fill(255,255,255)
+        textSize(25)
+        text('Removes all enemies projectile',1000, 610)
+        fill(220,20,30)
+        textSize(35)
+        text('Passive ability: Robot armor', 1000, 670)
+        fill(255,255,255)
+        textSize(25)
+        text("Thanks to the advance of modern technology, and ol' reliable duct", 1000, 710)
+        text("tape, McMillian is equipped with the state of the art Model MXXI Steel", 1000, 740)
+        text("Back Hydro-powered X15600008 A46 B80 C1 (New Gen) D808 RGB-CMYK", 1000, 770)
+        text("Z00000P B-side RevolverZ RTX 300080 Cs306900TXT Pure-Bred Non-GMO", 1000, 800)
+        text("FFS SME SMB Wifi 80001.01 Nvidia AMD Intel@ Trade-marked Armor", 1000, 830)
+        text("This allows him to have a chance of absorbing hits and protect", 1000, 860)
+        text("his time! The armor is at least harder than paper so he can take", 1000, 890)
+        text("some hits and pack a punch!", 1000, 920)
+        fill(220,20,30)
+        textSize(35)
+        text('Description: High defense, medium damage,', 1000, 990)
+        text('as much time as a robot can have', 1000, 1030)
 
     pass
 
