@@ -2,6 +2,7 @@ Sound,first_levels
 #An empty line is used to separate levels
 #possible tutorial here
 
+Boss,950,800,920,200,1700
 BuffItem,500,800,4
 BuffItem,400,800,3
 Worm,900,800,920,100,1900

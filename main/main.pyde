@@ -937,7 +937,7 @@ class Bat(Enemy):
 
 class Reaper(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 100, 3, 10, 5.5, 1, 100, False, False, 100)
+        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 300, 3, 10, 5.5, 1, 100, False, False, 100)
         self.attackmode = 0
         self.barrage_cnt = 13
         self.sidebarrage_cnt = 40
@@ -958,6 +958,16 @@ class Reaper(Enemy):
                 image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
             if self.direction == LEFT:
                 image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+        stroke(0)
+        fill(255,255,255)
+        textSize(25)
+        text('Time Reaper', 300,62)
+        fill(255,0,0)
+        noFill()
+        rect(300,80,self.hp*5, 25)
+        fill(255,0,0)
+        rect(300,80,self.hp*5, 25)
 
     def attack(self):
         if self.attackmode == 0:
