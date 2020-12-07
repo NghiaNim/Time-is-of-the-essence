@@ -8,6 +8,10 @@ WIDTH = 1920
 HEIGHT = 1080
 gameScreen = 0
 gameground = 920
+player = Minim(this)
+main_theme = player.loadFile(path + "/Sound/main_theme.mp3")
+main_theme.rewind()
+main_theme.loop()
 
 class Game:
     def __init__(self, w, h, g, hero):
@@ -27,13 +31,21 @@ class Game:
         for line in level:
             if line == '\n':
                 break
-
+            
+            
             line = line.strip().split(',')
             if line[0] == 'TimeWraith':
                 line = list(map(int, line[1:]))
                 self.enemylist.append(TimeWraith(line[0],line[1],line[2],line[3],line[4]))
 
-
+            if line[0] == 'Sound':
+                global main_theme
+                main_theme.close()
+                main_theme = player.loadFile(path + "/Sound/" + line[1] + '.mp3')
+                main_theme.rewind()
+                main_theme.loop()
+                
+                
             elif line[0] == 'Worm':
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Worm(line[0],line[1],line[2],line[3],line[4]))
@@ -46,6 +58,10 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.enemylist.append(Bat(line[0],line[1],line[2],line[3],line[4]))
 
+            elif line[0] == 'Boss':
+                line = list(map(int, line[1:]))
+                self.enemylist.append(Reaper(line[0],line[1],line[2],line[3],line[4]))
+
             elif line[0] == 'BuffItem':
                 line = list(map(int, line[1:]))
                 self.itemlist.append(BuffItem(line[0],line[1],self.g,line[2]))
@@ -54,9 +70,21 @@ class Game:
                 line = list(map(int, line[1:]))
                 self.obstaclelist.append(Wall(line[0], line[1]))
 
+            elif line[0] == 'SmallWall':
+                line = list(map(int, line[1:]))
+                self.obstaclelist.append(SmallWall(line[0], line[1]))
+
             elif line[0] == 'Platform':
                 line = list(map(int, line[1:]))
                 self.platformlist.append(Platform(line[0], line[1]))
+
+            elif line[0] == 'ShortPlatform':
+                line = list(map(int, line[1:]))
+                self.platformlist.append(ShortPlatform(line[0], line[1]))
+
+            elif line[0] == 'LongPlatform':
+                line = list(map(int, line[1:]))
+                self.platformlist.append(LongPlatform(line[0], line[1]))
 
             elif line[0] == 'end':
                 global gameScreen
@@ -196,7 +224,7 @@ class Creation:
 class Hero(Creation):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, time, dmg, speed):
         Creation.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames)
-        self.key_handler = {LEFT:False, RIGHT:False, UP:False, DOWN:False, 'Q':False, 'E':False}
+        self.key_handler = {LEFT:False, RIGHT:False, SHIFT:False, UP:False, DOWN:False, 'Q':False, 'E':False}
         self.standing_y = y
         self.standing_h = h
         self.direction = RIGHT
@@ -223,8 +251,6 @@ class Hero(Creation):
 
         self.col_framestamp = frameCount
 
-        self.base_shootingspeed = 15
-
         self.shoot_framestamp = frameCount
         
         self.invincible = 0
@@ -246,6 +272,9 @@ class Hero(Creation):
         self.active_speed = 0 #for speed buff
         self.active_damage = 0 #for damage buff
         self.active_shooting_speed = 0 #for shooting speed buff
+        
+        self.gravityBullet = False
+        self.gravityTime = 0
 
     def update(self):
         if self.autofire == True and frameCount%60 == 0:
@@ -263,6 +292,12 @@ class Hero(Creation):
 
                 if self.reloadtime == 0:
                     self.charges = self.base_charges
+                    
+        if self.gravityBullet == True and frameCount%60 == 0:
+            self.gravityTime -= 1
+            if self.gravityTime < 0:
+                self.gravityBullet = False
+
 
 
         self.gravity()
@@ -271,12 +306,16 @@ class Hero(Creation):
         
         if self.invincible < 0:
             self.hit_right = False
-
+            
         if self.active_damage == 0:
             self.dmg = self.base_dmg
+
         elif frameCount %60 == 0:
             self.active_damage -= 1
         
+        if self.gravityBullet == True:
+            self.dmg = self.base_dmg * 1.2
+            
         if self.active_speed == 0:
             self.speed = self.base_speed
         elif frameCount %60 == 0:
@@ -294,14 +333,17 @@ class Hero(Creation):
         if self.knockback == False or self.invincible < 25:
             if self.invincible == 24:
                 self.knockback = False
-
+                
+            if self.key_handler['Q'] == True and self.autofire == True:
+                    self.attack()
+                    
             if self.key_handler[DOWN] == True and self.y+self.h == self.g:    
                 self.vx = 0
                 self.y = self.standing_y + self.standing_h/2
                 self.h = self.standing_h/2
+                
             else:
-                if self.key_handler['Q'] == True and self.autofire == True:
-                    self.attack()
+                
             
                 self.y = self.standing_y
                 self.h = self.standing_h
@@ -315,8 +357,8 @@ class Hero(Creation):
                 else:
                     self.vx = 0
         
-                if self.key_handler[UP] == True and self.y+self.h == self.g:
-                    self.vy = -7
+                if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
+                    self.vy = -9
 
             if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
                 self.special_ability()
@@ -335,10 +377,9 @@ class Hero(Creation):
             else:
                 self.vx = -7
     
-            if self.key_handler[UP] == True and self.y+self.h == self.g:
+            if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
                 self.vy = -10
 
-        #Attack Handler
 
         
         #frames of animation based on action
@@ -351,6 +392,7 @@ class Hero(Creation):
 
         #check for hit
         for enemy in game.enemylist:
+            
             #check for endgame
             if isinstance(enemy, Portal) and (self.collision_rect_right(enemy) or self.collision_rect_left(enemy)) and enemy.frame > 40 :
                 game.next_level = True
@@ -390,18 +432,25 @@ class Hero(Creation):
                     future_collision = True
         if future_collision == False:
             self.x += self.vx
+            
+        if self.x < 0:
+            self.x = 0
+            
+        elif self.x + self.w > 1920:
+            self.x = 1920 - self.w
+        
         self.y += self.vy
         self.standing_y += self.vy
         self.invincible -= 1
 
 
     def display(self):
-        
-        #rectangle to show hitbox
         self.update()
-        noFill()
-        fill(0,0,0)
-        rect(self.x, self.y, self.w, self.h)
+        #rectangle to show hitbox
+
+        # noFill()
+        # fill(0,0,0)
+        # # rect(self.x, self.y, self.w, self.h)
         
         
         if self.key_handler[DOWN] == True and self.y+self.h == self.g:
@@ -438,33 +487,54 @@ class Hero(Creation):
             strokeWeight(1.5)
             stroke(255,255,0)
 
-            ellipse(self.x + 15, self.y - 15 , 20, 8)
+            ellipse(self.x + 15, self.y , 20, 8)
         
         textSize(20)
+        fill(255,255,255)
         text('Remaining time: ' + str(self.time), 50, 30)
         text('(E) Ability cooldown: ' + str(self.real_active_ability_cooldown), 300, 30)
 
         if self.reloadtime != 0:
             fill(255,255,255)
-            text('Recharging...', 100, 900)
+            text('Recharging...', 100, 1000)
 
         if self.autofire == True:
             fill(0,255,0)
-            text('Rapid-fire mode', 100, 940)
+            text('Rapid-fire mode!', 400, 1000)
 
         if game.hero.buffed_time > 0:
             fill(0,255,0)
-            text('DAMAGE UP!', 100, 920)
+            text('DAMAGE UP!', 400, 1030)
             if frameCount % 60 == 0:
                 game.hero.buffed_time -= 1
+                
+        if self.gravityBullet == True:
+            fill(0,255,0)
+            text('Gravity Bullets!', 400, 1060)
 
 
 
     def attack(self):
+        
         if self.direction == LEFT:
             p_vx = -1
+            p_vy = 0
+            
         elif self.direction == RIGHT:
             p_vx = 1
+            p_vy = 0        
+            
+        
+        if self.key_handler[UP] == True:
+            p_vy = -1
+            if self.key_handler[LEFT]:
+                p_vy = -.5
+            elif self.key_handler[RIGHT]:
+                p_vy = -.5
+            else:
+                p_vx = 0
+            
+            
         if frameCount - self.shoot_framestamp > self.shootingspeed:
             self.shoot_framestamp = frameCount
             if not self.autofire:
@@ -473,10 +543,11 @@ class Hero(Creation):
                 self.bullet_img = 'bullet.png'
             else:
                 self.bullet_img = 'bullet_up.png'
-
-            game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -6, 150, False, self.dmg))
-
-
+            
+            if self.gravityBullet == True and not self.key_handler[UP]:
+                game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, -1.5, 150, self.gravityBullet, self.dmg))
+            else:
+                game.hero_projectiles.append(Projectile(self.x, self.y+10, 10, 10, self.bullet_img, 16, 16, 5, 8*p_vx, 8*p_vy, 150, self.gravityBullet, self.dmg))
 
 
     def invincible_buff(self, time):
@@ -498,10 +569,13 @@ class Hero(Creation):
 class Jack(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 8
+        self.base_shootingspeed = 20
+        self.shootingspeed = self.base_shootingspeed
+        
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 100, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 20
+
 
         
     def special_ability(self):
@@ -516,10 +590,12 @@ class Jack(Hero):
 class Jill(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 10
-        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 30, dmg, speed)
+        self.base_shootingspeed = 15
+        self.shootingspeed = self.base_shootingspeed
+
+        Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 45, dmg, speed)
         self.active_ability_cooldown = 10
         self.active_ability_time = 3
-        self.base_shootingspeed = 15
 
 
     def special_ability(self):
@@ -537,10 +613,12 @@ class Jill(Hero):
 class John(Hero):
     def __init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, dmg, speed):
         self.base_charges = 6
+        self.base_shootingspeed = 22
+        self.shootingspeed = self.base_shootingspeed
+        
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 120, dmg, speed)
         self.active_ability_time = 1
         self.active_ability_cooldown = 30
-        self.base_shootingspeed = 22
 
 
         
@@ -548,11 +626,15 @@ class John(Hero):
         #tank stomp
         stomp = self.dmg*3
         for enemy in game.enemylist:
-            enemy.damage(stomp, LEFT)
-            enemy.vy -= 3
-            enemy.y += enemy.vy
+            if isinstance(enemy,Portal):
+                continue
+            if enemy.flying == False:
+                enemy.damage(stomp, LEFT)
+                enemy.vy -= 3
+                enemy.y += enemy.vy
+                
             self.time -= self.dmg//2
-            pass
+
 
         
         self.real_active_ability_cooldown = self.active_ability_cooldown 
@@ -604,8 +686,7 @@ class Enemy(Creation):
 
     def update(self):
         if self.alive == True:
-            if self.flying == False:
-                self.gravity()
+            self.gravity()
 
 
             # Idle and attack loop (enemy will stop walking so he can attack)
@@ -727,20 +808,22 @@ class Enemy(Creation):
         self.alive = False
 
     def damage(self, dmg, dir): 
+        self.vy -= 3
         self.hp -= dmg
-        if self.flying == False:
-            self.vy -= 3
-
 
     def destroy(self):
         rand_int = random.randint(0,100)
         if rand_int < self.droprate:
-            game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
+            rand_int2 = random.choice([0,1])
+            if rand_int2 == 0:
+                game.itemlist.append(TimeItem(self.x, self.y, self.g, 15))
+            elif rand_int2 == 1:
+                game.itemlist.append(BuffItem(self.x, self.y, self.g))
         game.enemylist.remove(self)
 
 class TimeWraith(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 100, 3, 10, 5.5, 2, 50, True, False, 100)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 70, 2.5, 10, 5.5, 2, 50, True, False, 100)
 
     def attack(self):
         if self.direction == LEFT:
@@ -768,12 +851,12 @@ class TimeWraith(Enemy):
 
 class Worm(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 3, 0, 12, 1, 50, True, False, 350)
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 70, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
 class TimeWizard(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 50, False, False, 100)
+        Enemy.__init__(self, x, y, 60, 80, g, "TimeWizard.png", "TimeWizard.png", "TimeWizard_death.png", 320, 320, 4, 4, 12, 4, 200, x_left, x_right, 100, 3, 10, 5.5, 3, 70, False, False, 100)
         self.projectile_speed = 7 # VX attribute of the casted projectile
 
     def display(self):
@@ -799,22 +882,76 @@ class TimeWizard(Enemy):
 
 class Bat(Enemy):
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 0, 10, 5, 1, 50, False, True, 100)
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 70, False, True, 100)
         self.flying = True
+        self.g = y
 
     def attack(self):
             game.enemy_projectiles.append(BatBall(self.x, self.y, 0, self.dmg_projectile, self.p_gravity))
 
+    def gravity(self):
+        if self.y + self.h >= self.g:
+            self.vy = 0
+        else:
+            self.vy += 0.3
+            if self.y + self.h + self.vy > self.g:
+                self.vy = self.g - (self.y + self.h)
+
+class Reaper(Enemy):
+    def __init__(self, x, y, g, x_left, x_right):
+        Enemy.__init__(self, x, y, 75, 100, g, "reaper.png", "reaper_attack.png", "reaper_death.png", 100, 100, 8, 12, 20, 7, 200, x_left, x_right, 100, 3, 10, 5.5, 1, 100, False, False, 100)
+        self.attackmode = 0
+        self.barrage_cnt = 13
+        self.sidebarrage_cnt = 40
+
     def display(self):
-        self.update() 
-        #rect(self.x, self.y, self.w, self.h)
+        self.update()
         if self.alive == True:      
-            if self.idle == False:
-                image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
-            elif self.idle == True:
-                image(self.img_idle, self.x, self.y, self.img_w, self.img_h, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            if self.vx != 0 and self.direction == RIGHT:
+                image(self.img, self.x-50, self.y-65, self.img_w*2, self.img_h*2, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
+            elif self.vx != 0 and self.direction == LEFT:
+                image(self.img, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.frame + 1) * self.img_w, 0, self.frame * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == RIGHT:
+                image(self.img_idle, self.x-50, self.y-65, self.img_w*2, self.img_h*2, self.idle_frame * self.img_w, 0, (self.idle_frame + 1) * self.img_w, self.img_h)
+            elif self.vx == 0 and self.direction == LEFT:
+                image(self.img_idle, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.idle_frame + 1) * self.img_w, 0, self.idle_frame * self.img_w, self.img_h)
         elif self.alive == False:
-            image(self.img_death, self.x, self.y, self.img_w, self.img_h, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == RIGHT:
+                image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, self.death_frame * self.img_w, 0, (self.death_frame + 1) * self.img_w, self.img_h)
+            if self.direction == LEFT:
+                image(self.img_death, self.x-70, self.y-65, self.img_w*2, self.img_h*2, (self.death_frame + 1) * self.img_w, 0, self.death_frame * self.img_w, self.img_h)
+
+    def attack(self):
+        if self.attackmode == 0:
+            for n in range(self.barrage_cnt):
+                game.enemy_projectiles.append(BigClock((1920/self.barrage_cnt*n)-64, random.randint(0,200), 0, self.dmg_projectile, True))
+        elif self.attackmode == 1:
+            for n in range(self.sidebarrage_cnt):
+                x = random.choice([0, 1920])
+                if x == 0:
+                    p_dir = 1
+                else:
+                    p_dir = -1
+                game.enemy_projectiles.append(MiniFireball(x, 920/self.sidebarrage_cnt*n, self.projectile_speed*p_dir, self.dmg_projectile, False))
+        elif self.attackmode == 2:
+            for n in range(2):
+                rand_enemy = random.choice([1,2,3,4])
+                x = random.choice([300, 1600])
+                y = random.choice([300, 600, 700, 750, 800])
+                if rand_enemy == 1:
+                    game.enemylist.append(Bat(x, y, y, 200, 1600))
+                elif rand_enemy == 2:
+                    game.enemylist.append(TimeWraith(x, y, game.g, 200, 1600))
+                elif rand_enemy == 3:
+                    game.enemylist.append(TimeWizard(x, y, game.g, 200, 1600))
+                elif rand_enemy == 4:
+                    game.enemylist.append(Worm(x, y, game.g, 200, 1600))
+        elif self.attackmode == 3:
+            game.enemy_projectiles.append(ClockProjectile(self.x, self.y, 3.5, self.dmg_projectile, True))
+            game.enemy_projectiles.append(BigClock(self.x, self.y, 3.5, self.dmg_projectile, False))
+            game.enemy_projectiles.append(ClockProjectile(self.x+self.w, self.y, -3.5, self.dmg_projectile, True))
+            game.enemy_projectiles.append(BigClock(self.x+self.w, self.y, -3.5, self.dmg_projectile, False))
+        self.attackmode = (self.attackmode+1)%4
 
 
 class Projectile(Creation):
@@ -853,12 +990,13 @@ class Projectile(Creation):
             self.gravity()
             self.y += self.vy    
         self.x += self.vx
+        self.y += self.vy
 
         # If the projectile exceeds its framespan, it ought not to exist anymore
         if frameCount - self.framestart > self.framespan:
             self.destroy()
 
-        if self.y+self.h == game.g:
+        if self.y+self.h > game.g:
             self.destroy()
 
     def destroy(self):
@@ -869,16 +1007,24 @@ class Projectile(Creation):
             game.hero_projectiles.remove(self)
 
 class ClockProjectile(Projectile):
-    def __init__(self, x, y, projectile_speed, dmg):
-        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -4, 150, True, dmg)
+    def __init__(self, x, y, projectile_speed, dmg, gravity=True):
+        Projectile.__init__(self, x, y, 15, 15, "clock.png", 15, 15, 4, projectile_speed, -2, 150, gravity, dmg)
 
 class SmallFireball(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
-        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, -7, 150, gravity, dmg)
+        Projectile.__init__(self, x, y, 72, 29, "SmallFireball.png", 72, 29, 4, projectile_speed, 0, 150, gravity, dmg)
+
+class MiniFireball(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 19, 16, "minifireball.png", 19, 16, 3, projectile_speed, 0, 250, gravity, dmg)
 
 class BatBall(Projectile):
     def __init__(self, x, y, projectile_speed, dmg, gravity):
         Projectile.__init__(self, x, y, 32, 32, "batball.png", 32, 32, 4, projectile_speed, 0, 200, gravity, dmg)
+
+class BigClock(Projectile):
+    def __init__(self, x, y, projectile_speed, dmg, gravity):
+        Projectile.__init__(self, x, y, 64, 64, "bigclock.png", 64, 64, 5, projectile_speed, 0, 350, gravity, dmg)
 
 class Item(Creation):
 
@@ -929,18 +1075,20 @@ class BuffItem(Item):
                 game.hero.buffed_time = 5
                 pass
             
-            #time freeze
+            #rapid-fire
             elif self.item == 'Bananas':
                 game.hero.autofire = True
                 game.hero.autofiretime = 10 
                 pass 
                     
-            #insta kill
+            #time freeze
             elif self.item == 'Melon':
                 pass
                 
-            #invincibility
+            #gravity bullet
             elif self.item == 'Orange':
+                game.hero.gravityBullet = True
+                game.hero.gravityTime = 10
                 pass
         
             self.destroy()
@@ -975,9 +1123,21 @@ class Wall(Obstacle):
     def __init__(self, x, y):
         Obstacle.__init__(self, x, y, 69, 80, "wall.png", 69, 80)
 
+class SmallWall(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 46, 40, "smallwall.png", 46, 40)
+
 class Platform(Obstacle):
     def __init__(self, x, y):
         Obstacle.__init__(self, x, y, 256, 30, "platform.png", 256, 30)
+
+class ShortPlatform(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 100, 30, "shortplatform.png", 100, 30)
+
+class LongPlatform(Obstacle):
+    def __init__(self, x, y):
+        Obstacle.__init__(self, x, y, 448, 30, "longplatform.png", 448, 30)
 
 class Portal(Creation):
     def __init__(self, x, y, w, h):
@@ -1007,35 +1167,69 @@ class Portal(Creation):
 
     
             
-def drawMenu():
-    background(255, 255, 255)
-    stroke(0,0,0)
-    fill(0)
+def drawMenu_1():
+    img = loadImage(path + "/images/main_menu.jpg")
+    image(img,0,0)
+
+    img_title = loadImage(path + "/images/title.png")
+    image(img_title, 1250, 0)
+
     textSize(50)
-    text('Choose your champion', 100, 100)
-    noFill()
-    rect(100, 200, 300, 100)
-    text('Jack', 200, 270)
-    rect(100, 400, 300, 100)
-    text('Jill', 200, 470)
-    rect(100, 600, 300, 100)
-    text('John', 200, 670)
+    fill(255,255,255)
+    text('Play', 200, 270)
+
+    text('Control', 200, 470)
+
+    text('Quit', 200, 670)
+
     if 100<=mouseX<=400 and 200<=mouseY<=300:
-        stroke(0,255,0)
-        rect(100, 200, 300, 100)
-    
+        fill(0,255,0)
+        text('Play', 200, 270)
+
     elif 100<=mouseX<=400 and 400<=mouseY<=500:
-        stroke(0,255,0)
-        rect(100, 400, 300, 100)
+        fill(0,255,0)
+        text('Control', 200, 470)
     
     elif 100<=mouseX<=400 and 600<=mouseY<=700:
-        stroke(0,255,0)
-        rect(100, 600, 300, 100)
+        fill(0,255,0)
+        text('Quit', 200, 670)
+
+def drawMenu_2():
+    img = loadImage(path + "/images/menu_2.jpg")
+    image(img,0,0)
+
+    img_title = loadImage(path + "/images/title.png")
+    image(img_title, 1250, 0)
+
+    fill(0,68,129)
+    textSize(70)
+    text('CHARACTER SELECT', 200, 150)
+
+    fill(255,255,255)
+    text('McMillian Sondai\'el', 200, 370)
+
+    text('Jody Howar Glas', 200, 570)
+
+    text('Peterpen Julumn', 200, 770)
+
+    if 100<=mouseX<=850 and 300<=mouseY<=400:
+        fill(0,255,0)
+        text('McMillian Sondai\'el', 200, 370)
+        
+    
+    elif 100<=mouseX<=760 and 500<=mouseY<=600:
+        fill(0,255,0)
+        text('Jody Howar Glas', 200, 570)
+    
+    elif 100<=mouseX<=760 and 700<=mouseY<=800:
+        fill(0,255,0)
+        text('Peterpen Julumn', 200, 770)
+
+
     pass
 
 def drawGame():
     global game, level
-    background(255, 255, 255)
     game.display()
     if game.hero.time < 0:
         level = open('level_design.txt','r')
@@ -1047,15 +1241,44 @@ def drawGame():
         game = Game(WIDTH, HEIGHT, gameground, hero) 
         game.hero.time = real_time
 
+def drawControl():
+    background(0)
+    fill(255,255,255)
+    
+    textSize(50)
+    text('MOVEMENTS', 200, 370)
+    text('ATTACKS', 1000, 370)
+    text('BACK', 1700, 900)
+    
+    textSize(30)
+    text('LEFT RIGHT ARROW KEYS: move sideways', 200, 450)
+    text('LEFT SHIFT: jump', 200, 500)
+    text('DOWN ARROW KEY: crouch', 200, 550)
+    text('LEFT ARROW KEY: aim up', 200, 600)
+
+    text('Q (Normal): Fire (press and release)', 1000, 450)
+    text('Q (Rapid-fire-mode): Fire (hold)', 1000, 500)
+    text('E: Special ability', 1000, 550)
+
+    if 1650<=mouseX<=1850 and 820<=mouseY<=920:
+        textSize(50)
+        fill(0,255,0)
+        text('BACK', 1700, 900)
+
+
+
+
 def drawEnd():
-    background(255, 255, 255)
+    end_img = loadImage(path + "/images/end_menu.jpg")
+    image(end_img,0,0)
+
     stroke(0,0,0)
-    fill(0)
+    fill(48,93,228)
     textSize(50)
     text('You have successfully destroyed time', 500, 200)
     text('Enjoy your eternal meaningless existence', 460, 260)
     textSize(20)
-    text('Or press R to go back to character select', 750, 300)
+    text('(Or press R to go back to character select)', 750, 300)
         
 def setup():
     size(WIDTH, HEIGHT)
@@ -1063,29 +1286,39 @@ def setup():
     
 def draw():
     if gameScreen == 0:
-        drawMenu()
+        drawMenu_1()
     elif gameScreen == 1:
-        drawGame()
+        drawMenu_2()
     elif gameScreen == 2:
+        drawGame()
+    elif gameScreen == 3:
         drawEnd()
+    elif gameScreen == 'help':
+        drawControl()
     
 
 def keyPressed():
-    global gameScreen
+    global gameScreen, main_theme
     if keyCode == LEFT:
         game.hero.key_handler[LEFT] = True
     elif keyCode == RIGHT:
         game.hero.key_handler[RIGHT] = True
+    elif keyCode == SHIFT:
+        game.hero.key_handler[SHIFT] = True
     elif keyCode == UP:
-        game.hero.key_handler[UP] = True
+        game.hero.key_handler[UP] = True        
     elif keyCode == DOWN:
         game.hero.key_handler[DOWN] = True 
     elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = True
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = True
-    if gameScreen == 2 and (key == 'R' or key == 'r'):
-        gameScreen = 0
+    if gameScreen == 3 and (key == 'R' or key == 'r'):
+        main_theme.close()
+        main_theme = player.loadFile(path + "/Sound/main_theme.mp3")
+        main_theme.rewind()
+        main_theme.loop()
+        gameScreen = 1
 
 
 
@@ -1095,35 +1328,51 @@ def keyReleased():
         game.hero.key_handler[LEFT] = False
     elif keyCode == RIGHT:
         game.hero.key_handler[RIGHT] = False
+    elif keyCode == SHIFT:
+        game.hero.key_handler[SHIFT] = False
     elif keyCode == UP:
         game.hero.key_handler[UP] = False
     elif keyCode == DOWN:
-        game.hero.key_handler[DOWN] = False
-    elif (key == 'Q' or key == 'q'):
+        game.hero.key_handler[DOWN] = False 
+    elif key == 'Q' or key == 'q':
         game.hero.key_handler['Q'] = False
         if game.hero.reloadtime == 0:
             game.hero.attack()
+
     elif key == 'E' or key == 'e':
         game.hero.key_handler['E'] = False
         
 def mousePressed():
     global gameScreen,game,hero,level
     #Choose Jack
+    if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
+        gameScreen = 'help'
+
+    if gameScreen == 'help' and 1700<=mouseX<=1900 and 800<=mouseY<=1000:
+        gameScreen = 0
+
+    if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
+        exit()
+
     if gameScreen == 0 and 100<=mouseX<=400 and 200<=mouseY<=300:
+        gameScreen = 1
+
+    #Choose Jack
+    elif gameScreen == 1 and 100<=mouseX<=850 and 300<=mouseY<=400:
         hero = 'Jack'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
-        gameScreen = 1
+        gameScreen = 2
     #Choose Jill
-    if gameScreen == 0 and 100<=mouseX<=400 and 400<=mouseY<=500:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 500<=mouseY<=600:
         hero = 'Jill'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)
-        gameScreen = 1
+        gameScreen = 2
     #Choose John
-    if gameScreen == 0 and 100<=mouseX<=400 and 600<=mouseY<=700:
+    elif gameScreen == 1 and 100<=mouseX<=760 and 700<=mouseY<=800:
         hero = 'John'
         level = open('level_design.txt','r')
         game = Game(WIDTH, HEIGHT, gameground, hero)        
-        gameScreen = 1
+        gameScreen = 2
         
