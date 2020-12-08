@@ -487,10 +487,10 @@ class Hero(Creation):
         
         if self.key_handler[DOWN] == True and self.y+self.h == self.g and self.direction == RIGHT:
             print(self.img_crouch)
-            image(self.img_crouch, self.x, self.y, self.img_w, 24, 2 * self.img_w, 16, 3 * self.img_w, self.img_h)
+            image(self.img_crouch, self.x, self.y, self.img_w - 9, 24, 2 * self.img_w, 16, 3 * self.img_w - 9, self.img_h)
             
         elif self.key_handler[DOWN] == True and self.y+self.h == self.g and self.direction == LEFT:
-            image(self.img_crouch, self.x, self.y, self.img_w, 24, 3 * self.img_w, 16, 2 * self.img_w, self.img_h)
+            image(self.img_crouch, self.x, self.y, self.img_w - 9, 24, 3 * self.img_w - 9, 16, 2 * self.img_w, self.img_h)
             pass
         elif self.invincible > 0 and self.direction == RIGHT and self.knockback == True:
             image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 1 * self.img_w, 0, 2 * self.img_w - 18, self.img_h)
