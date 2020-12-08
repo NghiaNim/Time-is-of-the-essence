@@ -120,7 +120,7 @@ class Game:
             self.defreeze_enemies()
 
     
-    def display(self): # Display all element in the game
+    def display(self): # Display all elements in the game
         self.update()
         fill(0,0,0)
         stroke(0,0,0)
@@ -183,7 +183,7 @@ class Creation:
             if self.y + self.h + self.vy > self.g:
                 self.vy = self.g - (self.y + self.h)
 
-        # Changes the ground level if above platfrom or wall, bit more complex due to the bug 
+        # Changes the ground level if above platfrom or wall, bit more complex in order to avoid certain bugs
         changedg = False # registers if the ground should (and have) changed
         if len(game.obstaclelist) != 0:
             for o in game.obstaclelist: # If above obstacle
@@ -191,8 +191,8 @@ class Creation:
                     self.g = o.y
                     changedg = True
                     break
-        if len(game.platformlist) != 0: # If above platform
-            for p in game.platformlist:
+        if len(game.platformlist) != 0: 
+            for p in game.platformlist: # If above platform
                 if self.y + self.h <= p.y and self.x + self.w >= p.x and self.x <= p.x + p.w:
                     self.g = p.y
                     changedg = True
@@ -756,11 +756,15 @@ class Enemy(Creation):
         self.attacked_cnt = 0 #records the series of attacks
         self.time_buff = 15 # Time buff for the time item
         # Attributes for backend functions
-        self.framestart = frameCount 
-        self.direction = random.choice([LEFT, RIGHT])
-        self.flying = False
-        self.freeze = False
+        self.framestart = frameCount # Gives framestamp of initioation
+        self.direction = random.choice([LEFT, RIGHT]) # Walking direction
+        self.flying = False # Flying boolean
+        self.freeze = False # Is timefreeze active?
+        self.death_sound = player.loadFile(path + "/Sound/enemy_death.mp3")
+        self.hit_sound = player.loadFile(path + "/Sound/enemy_hit.mp3")
+        self.sfx = False # Boolean for ability sfx (mainly for bosses only so there aren't too many sounds mixing)
         
+        # Movement values
         self.vx = vx
         if self.direction == LEFT:
             self.vx *= -1
@@ -782,6 +786,9 @@ class Enemy(Creation):
                         self.tmp_vx = self.vx #stores the vx value
                         self.vx = 0
                         self.idle = True
+                        if self.sfx == True:
+                            self.ability_sound.rewind()
+                            self.ability_sound.play()
                     if self.attacked_cnt < self.attack_count and self.attack_frame-1 == self.idle_frame and frameCount%10 == 0:
                         if self.projectile_bol == True: #Does the enemy shoot projectiles?
                             self.attack()
@@ -835,6 +842,8 @@ class Enemy(Creation):
 
             if self.hp <= 0: # If the HP falls below zero, trigger death animation and turn of some behaviour (e.g. collision)
                 self.death()
+                self.death_sound.rewind()
+                self.death_sound.play()
 
             if self.freeze == False:
                 self.x += self.vx
@@ -896,6 +905,8 @@ class Enemy(Creation):
         self.alive = False
 
     def damage(self, dmg, dir): #Knockback and self-damage implication, theoretical knockback to the sides if desirable, but without it the game is harder which is desirable
+        self.hit_sound.rewind()
+        self.hit_sound.play()
         self.vy -= 3
         self.hp -= dmg
 
@@ -911,7 +922,7 @@ class Enemy(Creation):
 
 class TimeWraith(Enemy): # Predefined enemy - Wraith
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 70, 2.5, 10, 5.5, 2, 50, True, False, 100)
+        Enemy.__init__(self, x, y, 40, 52, g, "wraith.png", "wraith_shriek.png", "wraith_death.png", 64, 52, 7, 7, 7, 4, 140, x_left, x_right, 75, 2.5, 10, 5.5, 2, 50, True, False, 100)
 
     def attack(self): #Wraith unique attack
         if self.direction == LEFT:
@@ -939,7 +950,7 @@ class TimeWraith(Enemy): # Predefined enemy - Wraith
 
 class Worm(Enemy): # Predefined enemy - Worm, or snail, whichever makes you happier
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 70, 2, 0, 12, 1, 70, True, False, 350)
+        Enemy.__init__(self, x, y, 36, 64, g, "worm.png", "worm_idle.png", "worm_death.png", 36, 64, 6, 6, 3, 2, 220, x_left, x_right, 60, 2, 0, 12, 1, 70, True, False, 350)
         self.projectile_bol = False # Does the enemy cast projectiles?
 
 class TimeWizard(Enemy): # Predefined enemy - Time Wizard, probably biggest PITA
@@ -970,7 +981,7 @@ class TimeWizard(Enemy): # Predefined enemy - Time Wizard, probably biggest PITA
 
 class Bat(Enemy): # A flying enemy!
     def __init__(self, x, y, g, x_left, x_right):
-        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 40, 2, 10, 5, 1, 70, False, True, 100)
+        Enemy.__init__(self, x, y, 32, 32, g, "bat.png", "bat_attack.png", "bat_death.png", 32, 32, 7, 5, 3, 3, 60, x_left, x_right, 30, 2, 10, 5, 1, 70, False, True, 100)
         self.flying = True
         self.g = y
 
@@ -991,6 +1002,9 @@ class Reaper(Enemy): # The boss, the one and only, or until we add another
         self.attackmode = 0 # Yes! He has multiple attack modes :)
         self.barrage_cnt = 13 # Number of projectiles
         self.sidebarrage_cnt = 40 # Number of projectiles
+        self.death_sound = player.loadFile(path + "/Sound/reaper_death.mp3")
+        self.ability_sound = player.loadFile(path + "/Sound/reaper_ability.mp3")
+        self.sfx = True
 
     def display(self): # It is hard to find the perfect sprite
         self.update()
@@ -1033,7 +1047,7 @@ class Reaper(Enemy): # The boss, the one and only, or until we add another
                     p_dir = -1
                 game.enemy_projectiles.append(MiniFireball(x, 920/self.sidebarrage_cnt*n, self.projectile_speed*p_dir, self.dmg_projectile, False))
         elif self.attackmode == 2: # Enemies rain at oddly specfic locations
-            for n in range(2):
+            for n in range(random.choice([1,2])):
                 rand_enemy = random.choice([1,2,3,4])
                 x = random.choice([300, 1600])
                 y = random.choice([300, 600, 700, 750, 800])
