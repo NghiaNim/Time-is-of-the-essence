@@ -391,6 +391,15 @@ class Hero(Creation):
                     self.vx = 0
         
                 if self.key_handler[SHIFT] == True and self.y+self.h == self.g:
+                    if isinstance(self, Jill):
+                        jump = player.loadFile(path + '/Sound/jump_Jill.mp3')
+                    elif isinstance(self, Jack):
+                        jump = player.loadFile(path + '/Sound/jump_Jack.mp3')
+                    elif isinstance(self, John):
+                        jump = player.loadFile(path + '/Sound/jump_John.mp3')
+                        
+                    jump.rewind()
+                    jump.play()
                     self.vy = -9
 
             if self.key_handler['E'] == True and self.real_active_ability_cooldown == 0:
@@ -404,6 +413,18 @@ class Hero(Creation):
                 self.y = self.standing_y
                 self.h = self.standing_h
             if self.invincible == 59:
+
+                #play random hurt sounds
+                temp = random.randint(1,3)
+                if isinstance(self, Jill):
+                    hurt = player.loadFile(path + '/Sound/hurt_' + str(temp) + '_Jill.mp3')
+                elif isinstance(self, Jack):
+                    hurt = player.loadFile(path + '/Sound/hurt_' + str(temp) + '_Jack.mp3')
+                elif isinstance(self, John):
+                    hurt = player.loadFile(path + '/Sound/hurt_' + str(temp) + '_John.mp3') 
+
+                hurt.rewind()
+                hurt.play()
                 self.vy = -5
             if self.hit_right and (self.y + self.h < self.g):
                 self.vx = 7
