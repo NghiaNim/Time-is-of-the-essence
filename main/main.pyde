@@ -1491,7 +1491,7 @@ def drawControl():
     text('LEFT RIGHT ARROW KEYS: move sideways', 200, 450)
     text('LEFT SHIFT: jump', 200, 500)
     text('DOWN ARROW KEY: crouch', 200, 550)
-    text('LEFT ARROW KEY: aim up', 200, 600)
+    text('UP ARROW KEY: aim up', 200, 600)
 
     text('Q (Normal): Fire (press and release)', 1000, 450)
     text('Q (Rapid-fire-mode): Fire (hold)', 1000, 500)
