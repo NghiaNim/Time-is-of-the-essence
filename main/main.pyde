@@ -216,9 +216,9 @@ class Creation:
         self.y += self.vy
 
 
-    # Simple collision detection, doesn't check for side used for simple collisions
+    # Collision detection which check for side overlaping, or more exactly whether the middle, left point or right point overlap with the target
     def collision_rect(self, target):
-        if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+        if ((self.x < target.x + target.w) and (self.x + self.w > target.x)) or (((self.x*2+self.w)/2 < target.x+target.w) and ((self.x*2+self.w)/2) > target.x) and (((self.y < target.y + target.h) and (self.y + self.h > target.y)) or ((self.y*2+self.h)/2 > target.y and ((self.y*2+self.h)/2 < target.y+target.h))):
             return True
         else:
             return False
