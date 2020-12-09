@@ -1,6 +1,5 @@
 Sound,first_levels
 #An empty line is used to separate levels
-#possible tutorial here
 
 BuffItem,900,800,1
 LongPlatform,690,720
@@ -60,10 +59,8 @@ SmallWall,600,880
 Wall,1120,860
 
 Sound,second_levels
-#parameters:x,y,type
 BuffItem,1220,500,5
 BuffItem,900,200,2
-#parameters: x, y, g, x_left, x_right
 TimeWraith,200,790,920,200,800
 TimeWraith,1570,790,920,800,1920
 Worm,900,800,920,600,1000
@@ -72,7 +69,6 @@ TimeWizard,900,600,770,880,1136
 TimeWizard,1650,500,600,1450,1800
 Bat,650,780,780,0,860
 Bat,680,620,780,0,1000
-#parameters: x,y,w,h
 Wall,550,840
 Wall,950,840
 Wall,1500,840
