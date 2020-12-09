@@ -525,12 +525,15 @@ class Hero(Creation):
         # # rect(self.x, self.y, self.w, self.h)
         
         
-        if self.key_handler[DOWN] == True and self.y+self.h == self.g:
-            #no animation for crouching yet
+        if self.key_handler[DOWN] == True and self.y+self.h == self.g and self.direction == RIGHT:
+            print(self.img_crouch)
+            image(self.img_crouch, self.x, self.y, self.img_w - 9, 24, 2 * self.img_w, 16, 3 * self.img_w - 9, self.img_h)
             
+        elif self.key_handler[DOWN] == True and self.y+self.h == self.g and self.direction == LEFT:
+            image(self.img_crouch, self.x, self.y, self.img_w - 9, 24, 3 * self.img_w - 9, 16, 2 * self.img_w, self.img_h)
             pass
         elif self.invincible > 0 and self.direction == RIGHT and self.knockback == True:
-            image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 1 * self.img_w, 0, 2 *self.img_w - 18, self.img_h)
+            image(self.img_hurt, self.x, self.y, self.img_w - 18, self.img_h, 1 * self.img_w, 0, 2 * self.img_w - 18, self.img_h)
 
         
         elif self.invincible > 0 and self.direction == LEFT and self.knockback == True:
@@ -654,6 +657,7 @@ class Jack(Hero):
         self.base_charges = 8
         self.base_shootingspeed = 20
         self.shootingspeed = self.base_shootingspeed
+        self.img_crouch = loadImage(path + "/images/stupid.png")
         
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 85, dmg, speed)
         self.armor = 2
@@ -676,6 +680,7 @@ class Jill(Hero):
         self.base_charges = 10
         self.base_shootingspeed = 15
         self.shootingspeed = self.base_shootingspeed
+        self.img_crouch = loadImage(path + "/images/Jill_crouch.png")
 
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 45, dmg, speed)
         self.armor = 0
@@ -700,6 +705,7 @@ class John(Hero):
         self.base_charges = 6
         self.base_shootingspeed = 22
         self.shootingspeed = self.base_shootingspeed
+        self.img_crouch = loadImage(path + "/images/John_crouch.png")
         
         Hero.__init__(self, x, y, w, h, g, img_name, img_w, img_h, num_frames, img_name_idle, idle_num_frames, img_name_hurt, hurt_num_frames, img_name_jump, jump_num_frames, 105, dmg, speed)
         self.armor = 4
