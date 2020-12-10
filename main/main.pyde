@@ -216,9 +216,9 @@ class Creation:
         self.y += self.vy
 
 
-    # Simple collision detection, doesn't check for side used for simple collisions
+    # Collision detection which check for side overlaping, or more exactly whether the middle, left point or right point overlap with the target
     def collision_rect(self, target):
-        if (self.x < target.x + target.w) and (self.x + self.w > target.x) and (self.y < target.y + target.h) and (self.y + self.h > target.y):
+        if (((self.x < target.x + target.w) and (self.x + self.w > target.x)) or (((self.x*2+self.w)/2 < target.x+target.w) and ((self.x*2+self.w)/2) > target.x)) and (((self.y < target.y + target.h) and (self.y + self.h > target.y)) or ((self.y*2+self.h)/2 > target.y and ((self.y*2+self.h)/2 < target.y+target.h))):
             return True
         else:
             return False
@@ -245,7 +245,8 @@ class Creation:
 
         
     def display(self): # Basic display method
-        self.update()       
+        self.update()
+        #rect(self.x, self.y, self.w, self.h)      
         if self.direction == RIGHT:
             image(self.img, self.x, self.y, self.img_w, self.img_h, self.frame * self.img_w, 0, (self.frame + 1) * self.img_w, self.img_h)
         elif self.direction == LEFT:
@@ -833,12 +834,15 @@ class Enemy(Creation):
 
             # Collision with projectiles
             for p in game.hero_projectiles:
-                if self.collision_rect_left(p) == True:
-                    self.damage(p.dmg, LEFT) # Cause damage to self
-                    p.destroy() # Destroy the projectile
-                elif self.collision_rect_right(p) == True:
+                if self.collision_rect(p) == True:
                     self.damage(p.dmg, RIGHT)
                     p.destroy()
+                # if self.collision_rect_left(p) == True:
+                #     self.damage(p.dmg, LEFT) # Cause damage to self
+                #     p.destroy() # Destroy the projectile
+                # elif self.collision_rect_right(p) == True:
+                #     self.damage(p.dmg, RIGHT)
+                #     p.destroy()
 
             #slow down animation
             if frameCount%10 == 0:
