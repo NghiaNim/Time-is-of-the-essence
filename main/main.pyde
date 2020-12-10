@@ -1540,19 +1540,19 @@ def draw():
 ### Key & Mouse-click Handlers ###
 def keyPressed():
     global gameScreen, main_theme
-    if keyCode == LEFT:
+    if keyCode == LEFT and gameScreen == 2:
         game.hero.key_handler[LEFT] = True
-    elif keyCode == RIGHT:
+    elif keyCode == RIGHT and gameScreen == 2:
         game.hero.key_handler[RIGHT] = True
-    elif keyCode == SHIFT:
+    elif keyCode == SHIFT and gameScreen == 2:
         game.hero.key_handler[SHIFT] = True
-    elif keyCode == UP:
+    elif keyCode == UP and gameScreen == 2:
         game.hero.key_handler[UP] = True        
-    elif keyCode == DOWN:
+    elif keyCode == DOWN and gameScreen == 2:
         game.hero.key_handler[DOWN] = True 
-    elif key == 'Q' or key == 'q':
+    elif (key == 'Q' or key == 'q') and gameScreen == 2:
         game.hero.key_handler['Q'] = True
-    elif key == 'E' or key == 'e':
+    elif (key == 'E' or key == 'e') and gameScreen == 2:
         game.hero.key_handler['E'] = True
     if gameScreen == 3 and (key == 'R' or key == 'r'):
         main_theme.close()
@@ -1562,22 +1562,22 @@ def keyPressed():
         gameScreen = 1
         
 def keyReleased():
-    if keyCode == LEFT:
+    if keyCode == LEFT and gameScreen == 2:
         game.hero.key_handler[LEFT] = False
-    elif keyCode == RIGHT:
+    elif keyCode == RIGHT and gameScreen == 2:
         game.hero.key_handler[RIGHT] = False
-    elif keyCode == SHIFT:
+    elif keyCode == SHIFT and gameScreen == 2:
         game.hero.key_handler[SHIFT] = False
-    elif keyCode == UP:
+    elif keyCode == UP and gameScreen == 2:
         game.hero.key_handler[UP] = False
-    elif keyCode == DOWN:
+    elif keyCode == DOWN and gameScreen == 2:
         game.hero.key_handler[DOWN] = False 
-    elif key == 'Q' or key == 'q':
+    elif (key == 'Q' or key == 'q') and gameScreen == 2:
         game.hero.key_handler['Q'] = False
         if game.hero.reloadtime == 0:
             game.hero.attack()
 
-    elif key == 'E' or key == 'e':
+    elif (key == 'E' or key == 'e') and gameScreen == 2:
         game.hero.key_handler['E'] = False
         
 def mousePressed():
