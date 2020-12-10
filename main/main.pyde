@@ -835,12 +835,15 @@ class Enemy(Creation):
 
             # Collision with projectiles
             for p in game.hero_projectiles:
-                if self.collision_rect_left(p) == True:
-                    self.damage(p.dmg, LEFT) # Cause damage to self
-                    p.destroy() # Destroy the projectile
-                elif self.collision_rect_right(p) == True:
+                if self.collision_rect(p) == True:
                     self.damage(p.dmg, RIGHT)
                     p.destroy()
+                # if self.collision_rect_left(p) == True:
+                #     self.damage(p.dmg, LEFT) # Cause damage to self
+                #     p.destroy() # Destroy the projectile
+                # elif self.collision_rect_right(p) == True:
+                #     self.damage(p.dmg, RIGHT)
+                #     p.destroy()
 
             #slow down animation
             if frameCount%10 == 0:
